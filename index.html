@@ -2187,12 +2187,14 @@ btnDownload.addEventListener('click', async () => {
 
       const lastSlot = firstWeekdayMon + daysInMonth;
       const numCalRows = Math.ceil(lastSlot / 7);
+      const maxFlightsPerRow = Array(numCalRows).fill(0);
       for (let d = 1; d <= daysInMonth; d++){
         const slot = firstWeekdayMon + d - 1;
         const rIdx = Math.floor(slot / 7) + 3;
         const cIdx = (slot % 7) + 1;
         const cell = wsCal.getRow(rIdx).getCell(cIdx);
         const flights = flightsByDay.get(d) || [];
+        maxFlightsPerRow[rIdx - 3] = Math.max(maxFlightsPerRow[rIdx - 3], flights.length);
         const richText = [{ font:{name:'Calibri', bold:true, size:13, color:{argb:IB_RED}}, text: String(d) }];
         flights.forEach(f => {
           const [, , flt, origin, , deptTime, dest, , arrTime, subfleet] = f;
@@ -2203,7 +2205,12 @@ btnDownload.addEventListener('click', async () => {
         cell.border = { top:thinBlack(), bottom:thinBlack(), left:thinBlack(), right:thinBlack() };
         cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb: flights.length ? CAL_BLUE : IB_WHITE} };
       }
-      for (let r = 3; r <= numCalRows + 2; r++) wsCal.getRow(r).height = 125;
+      // altura dinamica por fila: suficiente para el dia con mas vuelos de esa semana,
+      // con un minimo de 60 (dias sin vuelos ocupan menos que antes)
+      for (let r = 3; r <= numCalRows + 2; r++){
+        const lines = 1 + maxFlightsPerRow[r - 3]; // linea del numero de dia + una por vuelo
+        wsCal.getRow(r).height = Math.max(60, 18 + lines * 13);
+      }
     });
 
     const buf = await wb.xlsx.writeBuffer();
