@@ -1311,7 +1311,7 @@
 // Marca de version: cambiala (o simplemente deja que la actualice el script de build)
 // cada vez que publiques un index.html nuevo, para que las pestañas abiertas
 // detecten que hay una version mas reciente.
-const APP_BUILD = '2026-09-17T08:25:28Z';
+const APP_BUILD = '2026-09-17T08:41:30Z';
 
 // ---- aviso de version nueva disponible ----
 // Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
@@ -2546,11 +2546,6 @@ function renderFcamoDetailView(item){
       <div class="fcamo-section-title">${sec.label}</div>
       ${sec.items.map(it => `<label class="fcamo-checkrow"><input type="checkbox" class="fcamo-item-check" data-id="${it.id}" ${state[it.id] ? 'checked' : ''}>${it.label}</label>`).join('')}
     `).join('')}
-    <div class="fcamo-section-title">Acknowledgement</div>
-    <div class="fcamo-form-grid">
-      <div class="fcamo-form-field"><label>Approved by</label><input type="text" id="fcamo-approved-by" value="${item.approved_by || ''}"></div>
-      <div class="fcamo-form-field"><label>Date</label><input type="text" id="fcamo-approved-date" placeholder="dd-MM-yyyy" value="${item.approved_date || ''}"></div>
-    </div>
     <button class="fcamo-delete-btn" id="fcamo-delete-btn" style="margin-top:18px;">Eliminar este F-CAMO-IBE-14</button>
   `;
 
@@ -2584,8 +2579,6 @@ function renderFcamoDetailView(item){
       scheduleSave({ items_state: state, status: newStatus });
     });
   });
-  document.getElementById('fcamo-approved-by').addEventListener('input', (e) => scheduleSave({ approved_by: e.target.value }));
-  document.getElementById('fcamo-approved-date').addEventListener('input', (e) => scheduleSave({ approved_date: e.target.value }));
   document.getElementById('fcamo-delete-btn').addEventListener('click', async () => {
     if (!confirm('¿Seguro que quieres eliminar este F-CAMO-IBE-14? No se puede deshacer.')) return;
     try {
