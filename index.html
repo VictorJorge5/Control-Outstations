@@ -1092,6 +1092,23 @@
   }
   .uncov-cover-btn.to-cover{background:var(--ok);color:#fff;border-color:var(--ok);}
   .uncov-cover-btn.to-uncover{background:var(--surface);color:var(--muted);border-color:var(--line);}
+  .uncov-note-text{font-size:13px;color:var(--ink-2);line-height:1.5;white-space:pre-wrap;}
+  .uncov-empty{color:var(--muted);font-style:italic;}
+  .uncov-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:11px;color:var(--muted);flex-wrap:wrap;}
+  .uncov-meta b{color:var(--ink-2);font-weight:600;}
+  .uncov-history-link{background:none;border:none;color:var(--red);font-size:11px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline;flex-shrink:0;}
+  .uncov-locked-msg{margin-top:10px;font-size:12px;color:var(--amber);background:var(--amber-bg);border-radius:var(--radius-sm);padding:8px 10px;}
+  .uncov-edit-actions{display:flex;gap:8px;margin-top:10px;}
+  .uncov-edit-btn{
+    font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;
+    background:var(--surface);color:var(--ink-2);border:1px solid var(--line);
+    border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;
+  }
+  .uncov-edit-btn:hover{background:var(--bg);}
+  .uncov-history-panel{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px;}
+  .uncov-history-item{font-size:11.5px;color:var(--ink-2);}
+  .uncov-history-item b{color:var(--ink);}
+  .uncov-history-time{color:var(--muted);}
   .update-banner{
     display:none;
     position:fixed;left:0;right:0;bottom:0;
@@ -1398,7 +1415,7 @@
 // Marca de version: cambiala (o simplemente deja que la actualice el script de build)
 // cada vez que publiques un index.html nuevo, para que las pestañas abiertas
 // detecten que hay una version mas reciente.
-const APP_BUILD = '2026-09-17T12:16:02Z';
+const APP_BUILD = '2026-09-17T13:20:29Z';
 
 // ---- aviso de version nueva disponible ----
 // Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
@@ -2742,7 +2759,7 @@ function renderFcamoDetailView(item){
   });
 }
 
-// ---- estaciones sin proveedor: notas compartidas + marcar como cubierta ----
+// ---- estaciones sin proveedor: notas compartidas con candado de edicion + historial ----
 const uncoveredOverlay = document.getElementById('uncovered-overlay');
 const uncoveredBody = document.getElementById('uncovered-body');
 const uncoveredBtn = document.getElementById('open-uncovered-panel');
@@ -2757,12 +2774,26 @@ async function notesApi(path, options){
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(options && options.headers) },
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Error de conexión');
+  if (!res.ok){
+    const err = new Error(data.error || 'Error de conexión');
+    err.locked_by = data.locked_by;
+    throw err;
+  }
   return data;
 }
 
 function uncoveredStationCodes(){
   return STATIONS.filter(s => s.pending && s.in_schedule).map(s => s.code);
+}
+
+function timeAgo(unixSeconds){
+  if (!unixSeconds) return '';
+  const diff = Math.max(0, Math.floor(Date.now() / 1000) - unixSeconds);
+  if (diff < 60) return 'hace un momento';
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`;
+  const days = Math.floor(diff / 86400);
+  return `hace ${days} día${days === 1 ? '' : 's'}`;
 }
 
 async function refreshUncoveredBadge(){
@@ -2775,73 +2806,167 @@ async function refreshUncoveredBadge(){
   } catch (err){ /* se reintentara al abrir el panel */ }
 }
 
+let uncovNotesByCode = {};
+let uncovState = {}; // code -> { editing, lockError, showHistory, historyItems }
+
 async function openUncoveredPanel(){
   uncoveredBody.innerHTML = '<div class="no-data">Cargando…</div>';
   uncoveredOverlay.classList.add('open');
   try {
     const { items } = await notesApi('', { method: 'GET' });
-    const notesByCode = {};
-    items.forEach(n => { notesByCode[n.station_code] = n; });
-    renderUncoveredPanel(notesByCode);
+    uncovNotesByCode = {};
+    items.forEach(n => { uncovNotesByCode[n.station_code] = n; });
+    uncovState = {};
+    renderUncoveredPanel();
   } catch (err){
     uncoveredBody.innerHTML = `<div class="no-data">No se ha podido conectar con el servidor (${err.message}).</div>`;
   }
 }
 
-function renderUncoveredPanel(notesByCode){
+function stateFor(code){
+  if (!uncovState[code]) uncovState[code] = { editing:false, lockError:null, showHistory:false, historyItems:null };
+  return uncovState[code];
+}
+
+function uncovCardHtml(code){
+  const s = STATIONS.find(x => x.code === code);
+  const n = uncovNotesByCode[code] || { note:'', covered:0, updated_by:'', updated_at:null };
+  const st = stateFor(code);
+
+  let bodyHtml;
+  if (st.editing){
+    bodyHtml = `
+      <textarea class="uncov-textarea" id="uncov-ta-${code}" placeholder="Ej: proveedor contactado, a la espera de firmar SGHA…">${n.note || ''}</textarea>
+      <div class="uncov-edit-actions">
+        <button class="uncov-cover-btn to-cover" data-act="save" data-code="${code}">Guardar</button>
+        <button class="uncov-cover-btn to-uncover" data-act="cancel" data-code="${code}">Cancelar</button>
+      </div>`;
+  } else {
+    bodyHtml = `
+      <div class="uncov-note-text">${n.note ? n.note.replace(/</g,'&lt;') : '<span class="uncov-empty">Sin notas todavía.</span>'}</div>
+      <div class="uncov-meta">
+        ${n.updated_by ? `Última nota de <b>${n.updated_by}</b>, ${timeAgo(n.updated_at)}` : 'Sin actividad registrada'}
+        <button class="uncov-history-link" data-act="history" data-code="${code}">${st.showHistory ? 'Ocultar historial' : 'Ver historial'}</button>
+      </div>
+      ${st.lockError ? `<div class="uncov-locked-msg">🔒 ${st.lockError} lo está editando ahora mismo. Inténtalo en unos minutos.</div>` : ''}`;
+  }
+
+  let historyHtml = '';
+  if (st.showHistory){
+    if (!st.historyItems){
+      historyHtml = '<div class="uncov-history-panel"><div class="no-data">Cargando historial…</div></div>';
+    } else if (!st.historyItems.length){
+      historyHtml = '<div class="uncov-history-panel"><div class="no-data">Sin cambios registrados todavía.</div></div>';
+    } else {
+      historyHtml = '<div class="uncov-history-panel">' + st.historyItems.map(h => {
+        const desc = h.action === 'covered'
+          ? (h.value === 'true' ? 'la marcó como cubierta' : 'la marcó como pendiente')
+          : `escribió: "${h.value.replace(/</g,'&lt;')}"`;
+        return `<div class="uncov-history-item"><b>${h.changed_by}</b> ${desc} <span class="uncov-history-time">· ${timeAgo(h.changed_at)}</span></div>`;
+      }).join('') + '</div>';
+    }
+  }
+
+  return `<div class="uncov-card ${n.covered ? 'is-covered' : ''}" data-code="${code}">
+    <div class="uncov-head">
+      <div class="uncov-head-left">
+        <span class="uncov-code">${code}</span>
+        <span class="uncov-city">${s ? s.city + ', ' + s.country : ''}</span>
+      </div>
+      <span class="fcamo-status-pill ${n.covered ? 'completed' : 'pending'}">${n.covered ? 'CUBIERTA' : 'PENDIENTE'}</span>
+    </div>
+    ${bodyHtml}
+    ${historyHtml}
+    <div class="uncov-footer">
+      ${!st.editing ? `<button class="uncov-edit-btn" data-act="edit" data-code="${code}">Editar</button>` : '<span></span>'}
+      <button class="uncov-cover-btn ${n.covered ? 'to-uncover' : 'to-cover'}" data-act="cover" data-code="${code}">${n.covered ? 'Marcar como pendiente' : 'Marcar como cubierta'}</button>
+    </div>
+  </div>`;
+}
+
+function renderUncoveredPanel(){
   const codes = uncoveredStationCodes();
   if (!codes.length){
     uncoveredBody.innerHTML = '<div class="no-data">No hay estaciones con vuelo y sin proveedor ahora mismo.</div>';
     document.getElementById('uncovered-count').textContent = '0';
     return;
   }
-  const notCovered = codes.filter(c => !(notesByCode[c] && notesByCode[c].covered)).length;
+  const notCovered = codes.filter(c => !(uncovNotesByCode[c] && uncovNotesByCode[c].covered)).length;
   document.getElementById('uncovered-count').textContent = notCovered;
 
-  uncoveredBody.innerHTML = codes.map(code => {
-    const s = STATIONS.find(x => x.code === code);
-    const n = notesByCode[code] || { note: '', covered: 0 };
-    return `<div class="uncov-card ${n.covered ? 'is-covered' : ''}" data-code="${code}">
-      <div class="uncov-head">
-        <div class="uncov-head-left">
-          <span class="uncov-code">${code}</span>
-          <span class="uncov-city">${s ? s.city + ', ' + s.country : ''}</span>
-        </div>
-        <span class="fcamo-status-pill ${n.covered ? 'completed' : 'pending'}">${n.covered ? 'CUBIERTA' : 'PENDIENTE'}</span>
-      </div>
-      <textarea class="uncov-textarea" placeholder="Ej: proveedor contactado, a la espera de firmar SGHA…">${n.note || ''}</textarea>
-      <div class="uncov-footer">
-        <span class="uncov-save-note" id="uncov-save-${code}">Guardado</span>
-        <button class="uncov-cover-btn ${n.covered ? 'to-uncover' : 'to-cover'}" data-code="${code}">${n.covered ? 'Marcar como pendiente' : 'Marcar como cubierta'}</button>
-      </div>
-    </div>`;
-  }).join('');
+  uncoveredBody.innerHTML = codes.map(uncovCardHtml).join('');
 
-  let saveTimers = {};
-  uncoveredBody.querySelectorAll('.uncov-textarea').forEach(ta => {
-    const code = ta.closest('.uncov-card').dataset.code;
-    ta.addEventListener('input', () => {
-      clearTimeout(saveTimers[code]);
-      saveTimers[code] = setTimeout(async () => {
-        try {
-          await notesApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ note: ta.value }) });
-          const note = document.getElementById(`uncov-save-${code}`);
-          note.classList.add('show'); setTimeout(() => note.classList.remove('show'), 1500);
-        } catch (err){ /* se reintentara con el siguiente cambio */ }
-      }, 600);
+  uncoveredBody.querySelectorAll('[data-act="edit"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const code = btn.dataset.code;
+      try {
+        const { item } = await notesApi(`/${code}/lock`, { method:'POST' });
+        uncovNotesByCode[code] = item;
+        stateFor(code).editing = true;
+        stateFor(code).lockError = null;
+        renderUncoveredPanel();
+        const ta = document.getElementById(`uncov-ta-${code}`);
+        if (ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+      } catch (err){
+        stateFor(code).lockError = err.locked_by || 'Otra persona';
+        renderUncoveredPanel();
+      }
     });
   });
-  uncoveredBody.querySelectorAll('.uncov-cover-btn').forEach(btn => {
+  uncoveredBody.querySelectorAll('[data-act="cancel"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const code = btn.dataset.code;
+      try { await notesApi(`/${code}/unlock`, { method:'POST' }); } catch (err){}
+      stateFor(code).editing = false;
+      renderUncoveredPanel();
+    });
+  });
+  uncoveredBody.querySelectorAll('[data-act="save"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const code = btn.dataset.code;
+      const ta = document.getElementById(`uncov-ta-${code}`);
+      try {
+        const { item } = await notesApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ note: ta.value }) });
+        uncovNotesByCode[code] = item;
+        stateFor(code).editing = false;
+        stateFor(code).showHistory = false;
+        stateFor(code).historyItems = null;
+        renderUncoveredPanel();
+      } catch (err){
+        alert('No se ha podido guardar: ' + err.message);
+      }
+    });
+  });
+  uncoveredBody.querySelectorAll('[data-act="cover"]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const code = btn.dataset.code;
       const goingToCover = btn.classList.contains('to-cover');
       try {
         const { item } = await notesApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ covered: goingToCover }) });
-        notesByCode[code] = item;
-        renderUncoveredPanel(notesByCode);
+        uncovNotesByCode[code] = item;
+        stateFor(code).showHistory = false;
+        stateFor(code).historyItems = null;
+        renderUncoveredPanel();
       } catch (err){
         alert('No se ha podido guardar: ' + err.message);
       }
+    });
+  });
+  uncoveredBody.querySelectorAll('[data-act="history"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const code = btn.dataset.code;
+      const st = stateFor(code);
+      st.showHistory = !st.showHistory;
+      if (st.showHistory && !st.historyItems){
+        renderUncoveredPanel();
+        try {
+          const { items } = await notesApi(`/${code}/history`, { method:'GET' });
+          st.historyItems = items;
+        } catch (err){
+          st.historyItems = [];
+        }
+      }
+      renderUncoveredPanel();
     });
   });
 }
