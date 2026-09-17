@@ -988,6 +988,53 @@
   }
   .ov-see-all:hover{color:var(--red-700);}
   .ov-see-all svg{width:13px;height:13px;}
+
+  /* ---- F-CAMO-IBE-14 ---- */
+  .fcamo-list-item{
+    display:flex;align-items:center;gap:14px;
+    border:1px solid var(--line);border-radius:var(--radius-md);
+    padding:14px 16px;margin-bottom:10px;cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .fcamo-list-item:hover{background:var(--bg);border-color:var(--muted-2);}
+  .fcamo-list-code{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;background:var(--bg-inset);border-radius:5px;padding:4px 8px;flex-shrink:0;}
+  .fcamo-list-meta{flex:1;min-width:0;}
+  .fcamo-list-reason{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fcamo-list-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .fcamo-progress-wrap{width:110px;flex-shrink:0;}
+  .fcamo-progress-bar{height:6px;border-radius:4px;background:var(--bg-inset);overflow:hidden;}
+  .fcamo-progress-fill{height:100%;background:var(--ok);border-radius:4px;}
+  .fcamo-progress-txt{font-size:10.5px;color:var(--muted);margin-top:4px;text-align:right;}
+  .fcamo-status-pill{
+    font-size:9.5px;font-weight:700;letter-spacing:0.3px;
+    padding:3px 8px;border-radius:999px;flex-shrink:0;
+  }
+  .fcamo-status-pill.completed{background:var(--ok-bg);color:var(--ok);}
+  .fcamo-status-pill.pending{background:var(--amber-bg);color:var(--amber);}
+  .fcamo-back{
+    display:inline-flex;align-items:center;gap:7px;
+    background:none;border:none;color:var(--muted);
+    font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;font-weight:600;
+    cursor:pointer;margin-bottom:16px;padding:0;
+  }
+  .fcamo-back:hover{color:var(--red);}
+  .fcamo-back svg{width:15px;height:15px;}
+  .fcamo-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+  .fcamo-form-field label{display:block;font-size:11px;font-weight:600;color:var(--muted-2);margin-bottom:6px;}
+  .fcamo-form-field input, .fcamo-form-field select{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:var(--radius-sm);
+    font-family:'IBM Plex Sans',sans-serif;font-size:13px;background:var(--surface);color:var(--ink);
+  }
+  .fcamo-checkrow{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:13px;color:var(--ink-2);cursor:pointer;}
+  .fcamo-checkrow input{width:16px;height:16px;accent-color:var(--red);cursor:pointer;flex-shrink:0;}
+  .fcamo-section-title{font-size:12px;font-weight:700;color:var(--ink);margin:18px 0 8px;padding-top:14px;border-top:1px solid var(--line);}
+  .fcamo-section-title:first-of-type{border-top:none;padding-top:0;margin-top:0;}
+  .fcamo-detail-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;flex-wrap:wrap;gap:10px;}
+  .fcamo-detail-title{font-size:15px;font-weight:700;color:var(--ink);}
+  .fcamo-detail-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
+  .fcamo-save-note{font-size:11px;color:var(--ok);margin-left:8px;opacity:0;transition:opacity .3s ease;}
+  .fcamo-save-note.show{opacity:1;}
+  .fcamo-delete-btn{font-size:11.5px;color:var(--red);background:none;border:none;cursor:pointer;text-decoration:underline;}
   .update-banner{
     display:none;
     position:fixed;left:0;right:0;bottom:0;
@@ -1142,6 +1189,7 @@
             <span class="label-text">Solo estaciones de pernocta</span>
           </label>
           <button type="button" class="ov-see-all" id="open-pernocta-overview" style="margin-top:2px;">Ver todas las pernoctas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <button type="button" class="ov-see-all" id="open-fcamo-overview" style="margin-top:8px;">F-CAMO-IBE-14 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </div>
       <div class="list-header">
@@ -1237,6 +1285,24 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="fcamo-overview-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <div class="modal-code-row">
+          <span class="modal-code" style="font-family:'IBM Plex Sans',sans-serif;font-size:18px;">F-CAMO-IBE-14</span>
+        </div>
+        <div class="modal-city">Checklists de apertura y actualización de estación, compartidas por el equipo</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-excel" id="btn-new-fcamo" style="background:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Nuevo F-CAMO-IBE-14</button>
+        <button class="btn-close" id="btn-close-fcamo-overview">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="fcamo-overview-body"></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
@@ -1245,7 +1311,7 @@
 // Marca de version: cambiala (o simplemente deja que la actualice el script de build)
 // cada vez que publiques un index.html nuevo, para que las pestañas abiertas
 // detecten que hay una version mas reciente.
-const APP_BUILD = '2026-09-17T08:11:39Z';
+const APP_BUILD = '2026-09-17T08:25:28Z';
 
 // ---- aviso de version nueva disponible ----
 // Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
@@ -2161,7 +2227,7 @@ function closeSchedule(){
 
 btnClose.addEventListener('click', closeSchedule);
 modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeSchedule(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSchedule(); closeAltModal(); closePernoctaOverview(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSchedule(); closeAltModal(); closePernoctaOverview(); closeFcamoOverview(); } });
 
 // ---- modal de detalle para "Proveedores no contratados" ----
 const altModalOverlay = document.getElementById('altmodal-overlay');
@@ -2286,6 +2352,250 @@ function closePernoctaOverview(){
 openPernoctaOverviewBtn.addEventListener('click', openPernoctaOverview);
 btnClosePernoctaOverview.addEventListener('click', closePernoctaOverview);
 pernoctaOverviewOverlay.addEventListener('click', (e) => { if (e.target === pernoctaOverviewOverlay) closePernoctaOverview(); });
+
+// ---- F-CAMO-IBE-14: checklists compartidas ----
+const FCAMO_REASONS = [
+  { value:'opening', label:'New Maintenance Organization / Station opening' },
+  { value:'update', label:'Maintenance Organization or Station feature update' },
+];
+const FCAMO_STATION_TYPES = ['ETOPS', 'Overnight', 'On call'];
+const FCAMO_FLEET_SCOPE = ['A320 FAMILY', 'A321 XLR', 'A330', 'A350'];
+const FCAMO_SECTIONS = [
+  { key:'amos', label:'AMOS', items:[
+    {id:'amos_org_setup', label:'Maintenance Organization set up (APN 2207)'},
+    {id:'amos_contacts', label:'Station contacts created / updated (APN 53)'},
+    {id:'amos_store_address', label:'Store address created / updated (APN 53)'},
+  ]},
+  { key:'aviatar', label:'AVIATAR (Logbook central)', items:[
+    {id:'aviatar_can', label:'Company Approval Numbers set up'},
+    {id:'aviatar_rts', label:'Release to Service Workflows validated'},
+  ]},
+  { key:'staff', label:'Certifying and general staff', hideIfOnCall:true, items:[
+    {id:'staff_credentials', label:'Credentials Provisioning (IB Domain)'},
+    {id:'staff_apps', label:'IB apps access granted'},
+    {id:'staff_lshm', label:'LSHM / NTO05 course'},
+    {id:'staff_etlb_course', label:'AMOS mobile / E-TLB course'},
+  ]},
+  { key:'docs', label:'Maintenance Organization documentation', items:[
+    {id:'docs_form3', label:'EASA Form 3'},
+    {id:'docs_moe', label:'MOE (scope at the station)'},
+    {id:'docs_ssar', label:'SSAR fulfilled'},
+    {id:'docs_sgha', label:'SGHA signed'},
+    {id:'docs_tpaa', label:'Third Party Application Access Agreement (if not existing)'},
+  ]},
+  { key:'materials', label:'Materials Management', items:[
+    {id:'mat_iatp', label:'IATP Pool or MBK'},
+    {id:'mat_flightkit', label:'Flight Kit operation'},
+    {id:'mat_fluids', label:'Fluids (OIL/HYD) stock'},
+    {id:'mat_oss', label:'OSS consumables sent (if applicable)'},
+    {id:'mat_parts_alerts', label:'Parts alerts parametrization done (APN 313)'},
+    {id:'mat_store_locations', label:'Store locations created (APN 2409)'},
+  ]},
+  { key:'addition', label:'Addition', hideIfOnCall:true, items:[
+    {id:'add_etlb_keys', label:'E-TLB padlock keys sent'},
+  ]},
+];
+function fcamoAllItems(stationTypes){
+  const onCall = (stationTypes || []).includes('On call');
+  return FCAMO_SECTIONS.filter(s => !(s.hideIfOnCall && onCall)).flatMap(s => s.items);
+}
+function fcamoProgress(item){
+  const types = JSON.parse(item.station_types || '[]');
+  const state = JSON.parse(item.items_state || '{}');
+  const all = fcamoAllItems(types);
+  const done = all.filter(it => state[it.id]).length;
+  return { done, total: all.length, pct: all.length ? Math.round(done / all.length * 100) : 0 };
+}
+
+const fcamoOverviewOverlay = document.getElementById('fcamo-overview-overlay');
+const fcamoOverviewBody = document.getElementById('fcamo-overview-body');
+const btnNewFcamo = document.getElementById('btn-new-fcamo');
+const btnCloseFcamoOverview = document.getElementById('btn-close-fcamo-overview');
+document.getElementById('open-fcamo-overview').addEventListener('click', openFcamoOverview);
+btnCloseFcamoOverview.addEventListener('click', closeFcamoOverview);
+fcamoOverviewOverlay.addEventListener('click', (e) => { if (e.target === fcamoOverviewOverlay) closeFcamoOverview(); });
+btnNewFcamo.addEventListener('click', () => renderFcamoForm());
+
+async function fcamoApi(path, options){
+  const token = localStorage.getItem(AUTH_KEY);
+  const res = await fetch(`${AUTH_API_URL}/api/fcamo${path}`, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(options && options.headers) },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error de conexión');
+  return data;
+}
+
+async function openFcamoOverview(){
+  btnNewFcamo.style.display = '';
+  fcamoOverviewBody.innerHTML = '<div class="no-data">Cargando…</div>';
+  fcamoOverviewOverlay.classList.add('open');
+  try {
+    const { items } = await fcamoApi('', { method: 'GET' });
+    renderFcamoListView(items);
+  } catch (err){
+    fcamoOverviewBody.innerHTML = `<div class="no-data">No se ha podido conectar con el servidor (${err.message}).</div>`;
+  }
+}
+function closeFcamoOverview(){
+  fcamoOverviewOverlay.classList.remove('open');
+}
+
+function renderFcamoListView(items){
+  btnNewFcamo.style.display = '';
+  if (!items.length){
+    fcamoOverviewBody.innerHTML = '<div class="no-data">Todavía no hay ningún F-CAMO-IBE-14 abierto. Pulsa "Nuevo F-CAMO-IBE-14" para empezar uno.</div>';
+    return;
+  }
+  fcamoOverviewBody.innerHTML = items.map(item => {
+    const st = STATIONS.find(s => s.code === item.station_code);
+    const { done, total, pct } = fcamoProgress(item);
+    const reasonLabel = (FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason;
+    return `<div class="fcamo-list-item" data-id="${item.id}">
+      <span class="fcamo-list-code">${item.station_code}</span>
+      <span class="fcamo-list-meta">
+        <div class="fcamo-list-reason">${reasonLabel}</div>
+        <div class="fcamo-list-sub">${st ? st.city + ', ' + st.country : ''} · abierto por ${item.created_by}</div>
+      </span>
+      <span class="fcamo-status-pill ${item.status}">${item.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'}</span>
+      <span class="fcamo-progress-wrap">
+        <div class="fcamo-progress-bar"><div class="fcamo-progress-fill" style="width:${pct}%"></div></div>
+        <div class="fcamo-progress-txt">${done}/${total}</div>
+      </span>
+    </div>`;
+  }).join('');
+  fcamoOverviewBody.querySelectorAll('.fcamo-list-item').forEach(el => {
+    el.addEventListener('click', async () => {
+      fcamoOverviewBody.innerHTML = '<div class="no-data">Cargando…</div>';
+      try {
+        const { item } = await fcamoApi(`/${el.dataset.id}`, { method: 'GET' });
+        renderFcamoDetailView(item);
+      } catch (err){
+        fcamoOverviewBody.innerHTML = `<div class="no-data">No se ha podido cargar (${err.message}).</div>`;
+      }
+    });
+  });
+}
+
+function renderFcamoForm(){
+  btnNewFcamo.style.display = 'none';
+  const stationOptions = sortedStations.map(s => `<option value="${s.code}">${s.code} — ${s.city}</option>`).join('');
+  fcamoOverviewBody.innerHTML = `
+    <button class="fcamo-back" id="fcamo-form-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Todos los F-CAMO-IBE-14</button>
+    <div class="fcamo-detail-title" style="margin-bottom:18px;">Nuevo F-CAMO-IBE-14</div>
+    <div class="fcamo-section-title">Reason of F-CAMO-IBE-14</div>
+    ${FCAMO_REASONS.map((r,i) => `<label class="fcamo-checkrow"><input type="radio" name="fcamo-reason" value="${r.value}" ${i===0?'checked':''}>${r.label}</label>`).join('')}
+    <div class="fcamo-section-title">Station info</div>
+    <div class="fcamo-form-grid">
+      <div class="fcamo-form-field"><label>IATA Code</label><select id="fcamo-f-station">${stationOptions}</select></div>
+    </div>
+    <label style="font-size:11px;font-weight:600;color:var(--muted-2);display:block;margin-bottom:6px;">Station Type</label>
+    ${FCAMO_STATION_TYPES.map(t => `<label class="fcamo-checkrow"><input type="checkbox" class="fcamo-f-stationtype" value="${t}">${t}</label>`).join('')}
+    <div class="fcamo-section-title">Main organization data</div>
+    <div class="fcamo-form-grid">
+      <div class="fcamo-form-field"><label>Company name</label><input type="text" id="fcamo-f-company"></div>
+      <div class="fcamo-form-field"><label>EASA approval reference</label><input type="text" id="fcamo-f-easaref"></div>
+      <div class="fcamo-form-field"><label>Last EASA approval date</label><input type="text" id="fcamo-f-easadate" placeholder="dd-MM-yyyy"></div>
+    </div>
+    <label style="font-size:11px;font-weight:600;color:var(--muted-2);display:block;margin-bottom:6px;">Scope / Approved Fleet</label>
+    ${FCAMO_FLEET_SCOPE.map(f => `<label class="fcamo-checkrow"><input type="checkbox" class="fcamo-f-fleet" value="${f}">${f}</label>`).join('')}
+    <button class="login-btn" id="fcamo-f-submit" style="margin-top:20px;width:auto;padding:11px 22px;">Crear F-CAMO-IBE-14</button>
+  `;
+  document.getElementById('fcamo-form-back').addEventListener('click', openFcamoOverview);
+  document.getElementById('fcamo-f-submit').addEventListener('click', async () => {
+    const station_code = document.getElementById('fcamo-f-station').value;
+    const reason = document.querySelector('input[name="fcamo-reason"]:checked').value;
+    const station_types = [...document.querySelectorAll('.fcamo-f-stationtype:checked')].map(el => el.value);
+    const company_name = document.getElementById('fcamo-f-company').value.trim();
+    const easa_ref = document.getElementById('fcamo-f-easaref').value.trim();
+    const easa_date = document.getElementById('fcamo-f-easadate').value.trim();
+    const fleet_scope = [...document.querySelectorAll('.fcamo-f-fleet:checked')].map(el => el.value);
+    try {
+      const { item } = await fcamoApi('', { method:'POST', body: JSON.stringify({station_code, reason, station_types, company_name, easa_ref, easa_date, fleet_scope}) });
+      renderFcamoDetailView(item);
+    } catch (err){
+      alert('No se ha podido crear: ' + err.message);
+    }
+  });
+}
+
+function renderFcamoDetailView(item){
+  btnNewFcamo.style.display = 'none';
+  const st = STATIONS.find(s => s.code === item.station_code);
+  const types = JSON.parse(item.station_types || '[]');
+  const fleet = JSON.parse(item.fleet_scope || '[]');
+  const state = JSON.parse(item.items_state || '{}');
+  const reasonLabel = (FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason;
+  const onCall = types.includes('On call');
+  const sections = FCAMO_SECTIONS.filter(s => !(s.hideIfOnCall && onCall));
+  const { done, total, pct } = fcamoProgress(item);
+
+  fcamoOverviewBody.innerHTML = `
+    <button class="fcamo-back" id="fcamo-detail-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Todos los F-CAMO-IBE-14</button>
+    <div class="fcamo-detail-head">
+      <div>
+        <div class="fcamo-detail-title"><span class="fcamo-list-code">${item.station_code}</span> ${st ? st.city + ', ' + st.country : ''}</div>
+        <div class="fcamo-detail-sub">${reasonLabel} · abierto por ${item.created_by} · ${types.join(', ') || 'sin tipo de estación indicado'}${item.company_name ? ' · ' + item.company_name : ''}${fleet.length ? ' · ' + fleet.join(', ') : ''}</div>
+      </div>
+      <span class="fcamo-status-pill ${item.status}" id="fcamo-status-pill">${item.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'}</span>
+    </div>
+    <div class="fcamo-progress-bar" style="width:100%;margin-bottom:4px;"><div class="fcamo-progress-fill" id="fcamo-detail-fill" style="width:${pct}%"></div></div>
+    <div class="fcamo-progress-txt" id="fcamo-detail-progress-txt" style="text-align:left;margin-bottom:18px;">${done}/${total} completados <span class="fcamo-save-note" id="fcamo-save-note">Guardado</span></div>
+    ${sections.map(sec => `
+      <div class="fcamo-section-title">${sec.label}</div>
+      ${sec.items.map(it => `<label class="fcamo-checkrow"><input type="checkbox" class="fcamo-item-check" data-id="${it.id}" ${state[it.id] ? 'checked' : ''}>${it.label}</label>`).join('')}
+    `).join('')}
+    <div class="fcamo-section-title">Acknowledgement</div>
+    <div class="fcamo-form-grid">
+      <div class="fcamo-form-field"><label>Approved by</label><input type="text" id="fcamo-approved-by" value="${item.approved_by || ''}"></div>
+      <div class="fcamo-form-field"><label>Date</label><input type="text" id="fcamo-approved-date" placeholder="dd-MM-yyyy" value="${item.approved_date || ''}"></div>
+    </div>
+    <button class="fcamo-delete-btn" id="fcamo-delete-btn" style="margin-top:18px;">Eliminar este F-CAMO-IBE-14</button>
+  `;
+
+  document.getElementById('fcamo-detail-back').addEventListener('click', openFcamoOverview);
+
+  let saveTimer = null;
+  function scheduleSave(patch){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try {
+        const { item: updated } = await fcamoApi(`/${item.id}`, { method:'PATCH', body: JSON.stringify(patch) });
+        Object.assign(item, updated);
+        const note = document.getElementById('fcamo-save-note');
+        if (note){ note.classList.add('show'); setTimeout(() => note.classList.remove('show'), 1500); }
+      } catch (err){ /* si falla el guardado, se reintentara en el siguiente cambio */ }
+    }, 500);
+  }
+
+  fcamoOverviewBody.querySelectorAll('.fcamo-item-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      state[cb.dataset.id] = cb.checked;
+      const allItems = fcamoAllItems(types);
+      const doneNow = allItems.filter(it => state[it.id]).length;
+      const pctNow = Math.round(doneNow / allItems.length * 100);
+      document.getElementById('fcamo-detail-fill').style.width = pctNow + '%';
+      document.getElementById('fcamo-detail-progress-txt').firstChild.textContent = `${doneNow}/${allItems.length} completados `;
+      const newStatus = doneNow === allItems.length ? 'completed' : 'pending';
+      const pill = document.getElementById('fcamo-status-pill');
+      pill.className = 'fcamo-status-pill ' + newStatus;
+      pill.textContent = newStatus === 'completed' ? 'COMPLETADO' : 'PENDIENTE';
+      scheduleSave({ items_state: state, status: newStatus });
+    });
+  });
+  document.getElementById('fcamo-approved-by').addEventListener('input', (e) => scheduleSave({ approved_by: e.target.value }));
+  document.getElementById('fcamo-approved-date').addEventListener('input', (e) => scheduleSave({ approved_date: e.target.value }));
+  document.getElementById('fcamo-delete-btn').addEventListener('click', async () => {
+    if (!confirm('¿Seguro que quieres eliminar este F-CAMO-IBE-14? No se puede deshacer.')) return;
+    try {
+      await fcamoApi(`/${item.id}`, { method:'DELETE' });
+      openFcamoOverview();
+    } catch (err){
+      alert('No se ha podido eliminar: ' + err.message);
+    }
+  });
+}
 
 // ---- Excel export: replica exacta de la macro V18 ----
 // (hoja de listado con cabecera roja Iberia + logo, calendarios
