@@ -1927,7 +1927,7 @@ function renderOverviewTab(s){
   html += '<div class="ov-col"><div class="ov-section-title">Estado operativo</div>';
   html += `<div class="ov-status-card">
     <div class="ov-status-row"><span class="ov-status-lbl">Vuelo esta temporada</span><span class="ov-status-val${s.in_schedule?'':' warn'}">${s.in_schedule?'Sí':'No'}</span></div>
-    <div class="ov-status-row"><span class="ov-status-lbl">Pernocta estimada</span><span class="ov-status-val moon-val">${s.pernocta?`Sí (~${s.pernocta_gap_h}h)`:'No'}</span></div>
+    <div class="ov-status-row"><span class="ov-status-lbl">Pernocta</span><span class="ov-status-val moon-val">${s.pernocta?'Sí':'No'}</span></div>
   </div>`;
   html += '</div>';
 
