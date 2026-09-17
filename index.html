@@ -157,6 +157,14 @@
     flex-shrink:0;
   }
   .logout-btn:hover{background:rgba(255,255,255,0.14);}
+  .data-update-badge{
+    display:flex;align-items:center;gap:6px;
+    font-size:11px;
+    color:rgba(255,255,255,0.85);
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .data-update-badge svg{width:13px;height:13px;flex-shrink:0;}
 
   /* ---------- HEADER ---------- */
   header{
@@ -555,6 +563,7 @@
     .map-wrap{flex:1;min-height:0;}
     .sidebar.mobile-hidden, .map-wrap.mobile-hidden{display:none;}
     .kpis{display:none;}
+    .data-update-badge{display:none;}
     .ov-row{flex-direction:column;}
     .contacts-grid{grid-template-columns:1fr;}
     /* evita el zoom automatico de iOS al enfocar campos con fuente <16px */
@@ -1024,6 +1033,10 @@
       <div class="kpi"><span class="num" id="kpi-providers">—</span><span class="lbl">PROVEEDORES</span></div>
       <div class="kpi pend" id="kpi-pending-wrap"><span class="num" id="kpi-pending">—</span><span class="lbl">SIN ASIGNAR</span></div>
     </div>
+    <span class="data-update-badge" id="data-update-badge" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      Datos IB 26/27 cargados el 17 sep 2026
+    </span>
     <button class="logout-btn" id="logout-btn">Cerrar sesión</button>
   </header>
 
@@ -1170,6 +1183,12 @@
 // Sustituye esto por la URL de tu Worker una vez desplegado (ver DEPLOY.md).
 const AUTH_API_URL = 'https://control-estaciones-auth.victorjjm5.workers.dev';
 const AUTH_KEY = 'ib_control_estaciones_auth';
+const AUTH_EMAIL_KEY = 'ib_control_estaciones_email';
+
+function updateDataBadge(){
+  const email = localStorage.getItem(AUTH_EMAIL_KEY);
+  document.getElementById('data-update-badge').style.display = (email === 'vjjorge@iberia.es') ? 'flex' : 'none';
+}
 
 const loginOverlay = document.getElementById('login-overlay');
 const loginForm = document.getElementById('login-form');
@@ -1221,6 +1240,7 @@ if (resetToken){
   showLoginView('reset');
 } else if (savedToken){
   showApp();
+  updateDataBadge();
 } else {
   showLogin();
 }
@@ -1239,6 +1259,8 @@ loginForm.addEventListener('submit', async (e) => {
     const data = await res.json();
     if (res.ok && data.token){
       localStorage.setItem(AUTH_KEY, data.token);
+      localStorage.setItem(AUTH_EMAIL_KEY, data.email || email);
+      updateDataBadge();
       showApp();
     } else {
       loginError.textContent = data.error || 'Usuario o contraseña incorrectos.';
@@ -1307,6 +1329,7 @@ resetForm.addEventListener('submit', async (e) => {
 
 logoutBtn.addEventListener('click', () => {
   localStorage.removeItem(AUTH_KEY);
+  localStorage.removeItem(AUTH_EMAIL_KEY);
   showLogin();
 });
 
