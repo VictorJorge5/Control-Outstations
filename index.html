@@ -391,6 +391,11 @@
     padding:1px 0;
   }
   .switch-row span.label-text{color:var(--ink);}
+  .switch-row-with-link{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    flex-wrap:wrap;
+  }
+  .switch-row-with-link .ov-see-all{margin-top:0;font-size:12px;flex-shrink:0;}
   .switch{
     position:relative;
     width:32px;height:18px;
@@ -602,11 +607,19 @@
     .sidebar.mobile-hidden, .map-wrap.mobile-hidden{display:none;}
     .kpis{display:none;}
     .data-update-badge{display:none;}
-    .alert-pill{display:none !important;}
+    header{flex-wrap:wrap;height:auto;min-height:60px;padding:10px 14px;row-gap:8px;}
+    .alert-pill{font-size:10.5px;padding:5px 9px;}
+    .alert-pill svg{width:12px;height:12px;}
     .ov-row{flex-direction:column;}
     .contacts-grid{grid-template-columns:1fr;}
     /* evita el zoom automatico de iOS al enfocar campos con fuente <16px */
     .search-row input, select, .login-field input{font-size:16px;}
+    .fcamo-list-item{flex-wrap:wrap;}
+    .fcamo-list-meta{flex-basis:100%;order:1;}
+    .fcamo-progress-wrap{order:2;width:auto;flex:1;}
+    .fcamo-status-pill{order:0;}
+    .fcamo-form-grid{grid-template-columns:1fr;}
+    .contact-card{flex-wrap:wrap;}
   }
 
   @media (max-width:560px){
@@ -1240,11 +1253,13 @@
             <span class="switch"><input type="checkbox" id="active-only"><span class="track"></span><span class="thumb"></span></span>
             <span class="label-text">Solo con vuelo esta temporada</span>
           </label>
-          <label class="switch-row">
-            <span class="switch"><input type="checkbox" id="pernocta-only"><span class="track"></span><span class="thumb"></span></span>
-            <span class="label-text">Solo estaciones de pernocta</span>
-          </label>
-          <button type="button" class="ov-see-all" id="open-pernocta-overview" style="margin-top:2px;">Ver todas las pernoctas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <div class="switch-row-with-link">
+            <label class="switch-row" style="margin:0;">
+              <span class="switch"><input type="checkbox" id="pernocta-only"><span class="track"></span><span class="thumb"></span></span>
+              <span class="label-text">Solo estaciones de pernocta</span>
+            </label>
+            <button type="button" class="ov-see-all" id="open-pernocta-overview">Ver todas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          </div>
         </div>
       </div>
       <div class="list-header">
@@ -1383,7 +1398,7 @@
 // Marca de version: cambiala (o simplemente deja que la actualice el script de build)
 // cada vez que publiques un index.html nuevo, para que las pestañas abiertas
 // detecten que hay una version mas reciente.
-const APP_BUILD = '2026-09-17T12:06:23Z';
+const APP_BUILD = '2026-09-17T12:16:02Z';
 
 // ---- aviso de version nueva disponible ----
 // Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
