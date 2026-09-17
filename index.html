@@ -337,6 +337,7 @@
     border-radius:7px;
   }
   .suggest-item:hover{background:var(--bg);}
+  .suggest-item.active{background:var(--red-50);}
   .suggest-tag{
     font-size:9px;
     font-weight:700;
@@ -1685,6 +1686,25 @@ function highlightRow(code){
 searchEl.addEventListener('input', () => { doRender(); showSuggestions(); });
 searchEl.addEventListener('focus', showSuggestions);
 searchEl.addEventListener('blur', () => setTimeout(() => suggestBox.classList.remove('open'), 150));
+searchEl.addEventListener('keydown', (e) => {
+  if (!suggestBox.classList.contains('open')) return;
+  const items = suggestBox.querySelectorAll('.suggest-item');
+  if (!items.length) return;
+  if (e.key === 'ArrowDown'){
+    e.preventDefault();
+    setActiveSuggestItem(suggestActiveIndex + 1);
+  } else if (e.key === 'ArrowUp'){
+    e.preventDefault();
+    setActiveSuggestItem(suggestActiveIndex - 1);
+  } else if (e.key === 'Enter'){
+    if (suggestActiveIndex >= 0){
+      e.preventDefault();
+      items[suggestActiveIndex].dispatchEvent(new Event('mousedown'));
+    }
+  } else if (e.key === 'Escape'){
+    suggestBox.classList.remove('open');
+  }
+});
 stationEl.addEventListener('change', () => {
   doRender();
   const code = stationEl.value;
@@ -1702,7 +1722,10 @@ providerEl.addEventListener('change', doRender);
 activeOnlyEl.addEventListener('change', doRender);
 pernoctaOnlyEl.addEventListener('change', doRender);
 
+let suggestActiveIndex = -1;
+
 function showSuggestions(){
+  suggestActiveIndex = -1;
   const q = searchEl.value.trim().toLowerCase();
   if (!q){ suggestBox.classList.remove('open'); suggestBox.innerHTML=''; return; }
 
@@ -1721,11 +1744,12 @@ function showSuggestions(){
     return;
   }
 
+  let idx = 0;
   let html = '';
   if (stationMatches.length){
     html += '<div class="suggest-group-label">Estaciones</div>';
     stationMatches.forEach(s => {
-      html += `<div class="suggest-item" data-type="station" data-value="${s.code}">
+      html += `<div class="suggest-item" data-index="${idx++}" data-type="station" data-value="${s.code}">
         <span class="suggest-tag station">EST</span>
         <span class="main">${s.code}</span>
         <span class="sub">${s.city}, ${s.country}</span>
@@ -1738,7 +1762,7 @@ function showSuggestions(){
       const count = currentMode === 'main'
         ? STATIONS.filter(s => s.providers.includes(p)).length
         : ALT_STATIONS.filter(s => s.providers.some(pr => pr.supplier === p)).length;
-      html += `<div class="suggest-item" data-type="provider" data-value="${p}">
+      html += `<div class="suggest-item" data-index="${idx++}" data-type="provider" data-value="${p}">
         <span class="suggest-tag provider">PROV</span>
         <span class="main">${p}</span>
         <span class="sub">${count} estación${count===1?'':'es'}</span>
@@ -1748,24 +1772,35 @@ function showSuggestions(){
   suggestBox.innerHTML = html;
   suggestBox.classList.add('open');
 
-  suggestBox.querySelectorAll('.suggest-item').forEach(item => {
-    item.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      const type = item.dataset.type;
-      const value = item.dataset.value;
-      searchEl.value = '';
-      suggestBox.classList.remove('open');
-      if (type === 'station'){
-        providerEl.value = '';
-        stationEl.value = value;
-        stationEl.dispatchEvent(new Event('change'));
-      } else {
-        stationEl.value = '';
-        providerEl.value = value;
-        doRender();
-      }
-    });
+  function commitSuggestion(item){
+    const type = item.dataset.type;
+    const value = item.dataset.value;
+    searchEl.value = '';
+    suggestBox.classList.remove('open');
+    if (type === 'station'){
+      providerEl.value = '';
+      stationEl.value = value;
+      stationEl.dispatchEvent(new Event('change'));
+    } else {
+      stationEl.value = '';
+      providerEl.value = value;
+      doRender();
+    }
+  }
+
+  const items = suggestBox.querySelectorAll('.suggest-item');
+  items.forEach(item => {
+    item.addEventListener('mousedown', (e) => { e.preventDefault(); commitSuggestion(item); });
+    item.addEventListener('mouseenter', () => setActiveSuggestItem(parseInt(item.dataset.index)));
   });
+}
+
+function setActiveSuggestItem(idx){
+  const items = suggestBox.querySelectorAll('.suggest-item');
+  if (!items.length) return;
+  suggestActiveIndex = ((idx % items.length) + items.length) % items.length;
+  items.forEach(item => item.classList.toggle('active', parseInt(item.dataset.index) === suggestActiveIndex));
+  items[suggestActiveIndex].scrollIntoView({block:'nearest'});
 }
 
 render();
