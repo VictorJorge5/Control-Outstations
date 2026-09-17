@@ -1315,7 +1315,7 @@
 // Marca de version: cambiala (o simplemente deja que la actualice el script de build)
 // cada vez que publiques un index.html nuevo, para que las pestañas abiertas
 // detecten que hay una version mas reciente.
-const APP_BUILD = '2026-09-17T08:50:29Z';
+const APP_BUILD = '2026-09-17T11:45:40Z';
 
 // ---- aviso de version nueva disponible ----
 // Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
@@ -1343,11 +1343,11 @@ document.addEventListener('visibilitychange', () => {
 
 const AUTH_API_URL = 'https://control-estaciones-auth.victorjjm5.workers.dev';
 const AUTH_KEY = 'ib_control_estaciones_auth';
-const AUTH_EMAIL_KEY = 'ib_control_estaciones_email';
+const AUTH_BADGE_KEY = 'ib_control_estaciones_badge';
 
 function updateDataBadge(){
-  const email = localStorage.getItem(AUTH_EMAIL_KEY);
-  document.getElementById('data-update-badge').style.display = (email === 'vjjorge@iberia.es') ? 'flex' : 'none';
+  const show = localStorage.getItem(AUTH_BADGE_KEY) === '1';
+  document.getElementById('data-update-badge').style.display = show ? 'flex' : 'none';
 }
 
 const loginOverlay = document.getElementById('login-overlay');
@@ -1458,7 +1458,7 @@ loginForm.addEventListener('submit', async (e) => {
     const data = await res.json();
     if (res.ok && data.token){
       localStorage.setItem(AUTH_KEY, data.token);
-      localStorage.setItem(AUTH_EMAIL_KEY, data.email || email);
+      localStorage.setItem(AUTH_BADGE_KEY, data.show_data_badge ? '1' : '0');
       updateDataBadge();
       loadAppAndShow();
     } else {
@@ -1528,7 +1528,7 @@ resetForm.addEventListener('submit', async (e) => {
 
 logoutBtn.addEventListener('click', () => {
   localStorage.removeItem(AUTH_KEY);
-  localStorage.removeItem(AUTH_EMAIL_KEY);
+  localStorage.removeItem(AUTH_BADGE_KEY);
   showLogin();
 });
 
