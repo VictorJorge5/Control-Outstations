@@ -55,6 +55,7 @@
     display:none;
     flex-direction:column;
     height:100vh;
+    height:100dvh;
   }
   .app.visible{display:flex;}
 
@@ -208,6 +209,7 @@
     display:flex;
     min-height:0;
   }
+  .mobile-view-toggle{display:none;}
   .sidebar{
     width:392px;
     flex-shrink:0;
@@ -530,10 +532,57 @@
   ::-webkit-scrollbar-thumb:hover{background:#BEC3CA;background-clip:content-box;}
 
   @media (max-width:880px){
-    .sidebar{width:100%;position:absolute;z-index:900;height:60%;top:68px;box-shadow:var(--shadow-lg);}
-    .map-wrap{margin-top:60%;}
+    .body{flex-direction:column;min-height:0;}
+    .mobile-view-toggle{
+      display:flex;
+      flex-shrink:0;
+      border-bottom:1px solid var(--line);
+      background:var(--surface);
+    }
+    .mobile-view-toggle button{
+      flex:1;
+      display:flex;align-items:center;justify-content:center;gap:7px;
+      border:none;background:none;
+      padding:12px 8px;
+      font-family:'IBM Plex Sans',sans-serif;
+      font-size:13px;font-weight:600;color:var(--muted);
+      border-bottom:2.5px solid transparent;
+    }
+    .mobile-view-toggle button svg{width:16px;height:16px;}
+    .mobile-view-toggle button.active{color:var(--red);border-bottom-color:var(--red);}
+    .sidebar{width:100%;flex:1;min-height:0;box-shadow:none;}
+    .map-wrap{flex:1;min-height:0;}
+    .sidebar.mobile-hidden, .map-wrap.mobile-hidden{display:none;}
     .kpis{display:none;}
     .ov-row{flex-direction:column;}
+    .contacts-grid{grid-template-columns:1fr;}
+    /* evita el zoom automatico de iOS al enfocar campos con fuente <16px */
+    .search-row input, select, .login-field input{font-size:16px;}
+  }
+
+  @media (max-width:560px){
+    header{gap:10px;padding:0 14px;}
+    .header-divider{display:none;}
+    .titleblock .t2{display:none;}
+    .titleblock .t1{font-size:14px;}
+    .logo{height:19px;}
+    .logout-btn{padding:6px 9px;font-size:11px;}
+    .filter-row{flex-direction:column;}
+    .mode-toggle button{font-size:11px;padding:11px 4px;}
+    .modal-overlay{padding:10px;}
+    .modal, .modal.alt-modal{width:100%;max-height:94vh;}
+    .modal-header{padding:16px 16px 12px;}
+    .modal-tabs{padding:0 16px;}
+    .modal-tab{margin-right:16px;font-size:12.5px;}
+    .modal-body{padding:8px 16px 16px;}
+    .modal-code{font-size:18px;}
+    .btn-excel span, .btn-excel{font-size:12px;padding:8px 12px;}
+    .easa-badge{font-size:10px;padding:5px 8px;}
+    .pmatrix th, .pmatrix-cell, .pmatrix-empty{padding:8px 10px !important;font-size:12px;}
+    .login-card{padding:26px 20px 24px;}
+    .row-sched-btn{padding:9px;}
+    .row{padding:11px 14px;}
+    .list-header, .filters{padding-left:14px;padding-right:14px;}
   }
 
   /* ---------- SCHEDULE MODAL ---------- */
@@ -562,6 +611,8 @@
     display:flex;
     align-items:flex-start;
     justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
     padding:22px 24px 16px;
     border-bottom:1px solid var(--line);
     background:linear-gradient(180deg, #FCFCFD, #FFFFFF);
@@ -569,7 +620,7 @@
   .modal-code{font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:700;color:var(--ink);letter-spacing:-0.2px;}
   .modal-code-row{display:flex;align-items:center;gap:10px;}
   .modal-city{font-size:13px;color:var(--muted);margin-top:4px;}
-  .modal-actions{display:flex;gap:10px;align-items:center;}
+  .modal-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
   .btn-excel{
     background:var(--ok);
     color:#fff;
@@ -617,12 +668,18 @@
     padding:0 24px;
     border-bottom:1px solid var(--line);
     background:var(--surface);
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
   }
+  .modal-tabs::-webkit-scrollbar{display:none;}
   .modal-tab{
     background:none;
     border:none;
     padding:12px 6px 11px;
     margin-right:22px;
+    flex-shrink:0;
+    white-space:nowrap;
     font-family:'IBM Plex Sans',sans-serif;
     font-size:13px;
     font-weight:500;
@@ -775,6 +832,7 @@
   .pcal-back svg{width:15px;height:15px;}
   .pcal-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:16px;}
   .pcal-title .code{font-family:'IBM Plex Mono',monospace;background:var(--bg-inset);border-radius:5px;padding:3px 7px;margin-right:6px;}
+  .pcal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .pcal-grid{
     display:grid;
     grid-template-columns:repeat(7, 1fr);
@@ -783,6 +841,7 @@
     border:1px solid var(--line);
     border-radius:var(--radius-md);
     overflow:hidden;
+    min-width:630px;
   }
   .pcal-dow{
     background:var(--ink-2);
@@ -822,11 +881,13 @@
   .sched-head, .sg-row{
     display:grid;
     grid-template-columns: 1.1fr 0.55fr 0.95fr 0.8fr 0.95fr 0.8fr 0.8fr 0.95fr 0.8fr 1fr;
+    min-width:720px;
   }
   .sched-head{
     flex-shrink:0;
     background:var(--surface);
     border-bottom:1.5px solid var(--line);
+    overflow-x:hidden;
   }
   .sched-head > div{
     padding:10px 10px;
@@ -835,7 +896,7 @@
     color:var(--muted-2);
     font-weight:600;
   }
-  .sched-scroll{overflow-y:auto;flex:1;min-height:0;}
+  .sched-scroll{overflow-y:auto;overflow-x:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch;}
   .sg-row{border-top:1px solid var(--line-soft);}
   .sg-row:first-child{border-top:none;}
   .sg-row:nth-child(even){background:var(--bg);}
@@ -960,6 +1021,16 @@
   </header>
 
   <div class="body">
+    <div class="mobile-view-toggle" id="mobile-view-toggle">
+      <button class="active" data-view="list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Lista
+      </button>
+      <button data-view="map">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Mapa
+      </button>
+    </div>
     <aside class="sidebar">
       <div class="mode-toggle" id="mode-toggle">
         <button class="active" data-mode="main">Red contratada</button>
@@ -999,7 +1070,7 @@
       <div class="list" id="list"></div>
     </aside>
 
-    <div class="map-wrap">
+    <div class="map-wrap mobile-hidden">
       <div id="map"></div>
       <div class="legend">
         <div class="item"><span class="dot"></span> Asignada · con vuelo</div>
@@ -1038,7 +1109,7 @@
       <div class="tab-panel" id="tab-overview"></div>
       <div class="tab-panel" id="tab-sched" style="display:none;">
         <div class="sched-wrap">
-          <div class="sched-head">
+          <div class="sched-head" id="sched-head">
             <div>DATE</div><div>FREQ</div><div>FLT NUMBER</div><div>ORIGIN</div><div>DEPT TERMINAL</div><div>DEPT TIME</div><div>DESTINATION</div><div>DEST TERMINAL</div><div>ARRIVAL TIME</div><div>SUBFLEET</div>
           </div>
           <div id="sched-rows" class="sched-scroll"></div>
@@ -1242,6 +1313,26 @@ if (appEl.classList.contains('visible')){
   setTimeout(() => map.invalidateSize(), 100);
 }
 window.addEventListener('resize', () => map.invalidateSize());
+
+// ---- selector Mapa/Lista para movil ----
+const mobileViewToggle = document.getElementById('mobile-view-toggle');
+const sidebarEl = document.querySelector('.sidebar');
+const mapWrapEl = document.querySelector('.map-wrap');
+function setMobileView(view){
+  mobileViewToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  const showMap = view === 'map';
+  sidebarEl.classList.toggle('mobile-hidden', showMap);
+  mapWrapEl.classList.toggle('mobile-hidden', !showMap);
+  if (showMap) setTimeout(() => map.invalidateSize(), 60);
+}
+mobileViewToggle.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => setMobileView(btn.dataset.view));
+});
+// en movil, la lista esta encima del mapa: cuando el usuario elige una estacion
+// desde la lista, el desplegable o el buscador, esto la revela automaticamente
+function revealMapOnMobile(){
+  if (window.matchMedia('(max-width:880px)').matches) setMobileView('map');
+}
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap &copy; CARTO',
   maxZoom: 19
@@ -1468,6 +1559,7 @@ function render(){
       map.flyTo([s.lat, s.lon], 6, {duration:0.6});
       markers[s.code].openPopup();
       highlightRow(s.code);
+      revealMapOnMobile();
     });
     listEl.appendChild(row);
     rows[s.code] = row;
@@ -1512,6 +1604,7 @@ function renderAlt(){
       map.flyTo([s.lat, s.lon], 6, {duration:0.6});
       altMarkers[s.code].openPopup();
       highlightRow(s.code);
+      revealMapOnMobile();
     });
     listEl.appendChild(row);
     rows[s.code] = row;
@@ -1541,6 +1634,7 @@ stationEl.addEventListener('change', () => {
     map.flyTo([st.lat, st.lon], 6, {duration:0.6});
     activeMarkers[code].openPopup();
     highlightRow(code);
+    revealMapOnMobile();
   }
 });
 providerEl.addEventListener('change', doRender);
@@ -1626,6 +1720,8 @@ const modalCode = document.getElementById('modal-code');
 const modalCity = document.getElementById('modal-city');
 const modalSub = document.getElementById('modal-sub');
 const schedTbody = document.getElementById('sched-rows');
+const schedHeadEl = document.getElementById('sched-head');
+schedTbody.addEventListener('scroll', () => { schedHeadEl.scrollLeft = schedTbody.scrollLeft; });
 const btnClose = document.getElementById('btn-close-modal');
 const btnDownload = document.getElementById('btn-download-xlsx');
 const easaBadge = document.getElementById('easa-badge');
@@ -1991,7 +2087,7 @@ function pernoctaCalendarHtml(s, monthKey){
   const firstWeekdayMon = (firstOfMonth.getUTCDay() + 6) % 7; // 0=Lun..6=Dom
   const byDate = s.pernocta_by_date || {};
 
-  let html = '<div class="pcal-grid">' + DIAS_ES.map(d => `<div class="pcal-dow">${d}</div>`).join('');
+  let html = '<div class="pcal-scroll"><div class="pcal-grid">' + DIAS_ES.map(d => `<div class="pcal-dow">${d}</div>`).join('');
   for (let i = 0; i < firstWeekdayMon; i++) html += '<div class="pcal-cell pcal-blank"></div>';
   for (let d = 1; d <= daysInMonth; d++){
     const dateIso = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -2008,7 +2104,7 @@ function pernoctaCalendarHtml(s, monthKey){
       html += `<div class="pcal-cell"><div class="pcal-day pcal-day-off">${d}</div></div>`;
     }
   }
-  html += '</div>';
+  html += '</div></div>';
   return html;
 }
 
