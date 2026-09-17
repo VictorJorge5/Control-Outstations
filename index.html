@@ -988,9 +988,41 @@
   }
   .ov-see-all:hover{color:var(--red-700);}
   .ov-see-all svg{width:13px;height:13px;}
+  .update-banner{
+    display:none;
+    position:fixed;left:0;right:0;bottom:0;
+    z-index:6000;
+    background:var(--ink);
+    color:#fff;
+    align-items:center;justify-content:center;
+    gap:16px;
+    padding:12px 20px;
+    font-size:13px;
+    box-shadow:0 -2px 12px rgba(0,0,0,0.25);
+  }
+  .update-banner.open{display:flex;}
+  .update-banner button{
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:12.5px;font-weight:600;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    border:none;
+  }
+  #update-reload-btn{background:var(--red);color:#fff;padding:7px 14px;}
+  #update-reload-btn:hover{background:var(--red-700);}
+  #update-dismiss-btn{background:none;color:rgba(255,255,255,0.7);padding:6px;font-size:14px;}
+  #update-dismiss-btn:hover{color:#fff;}
+  @media (max-width:560px){
+    .update-banner{flex-wrap:wrap;text-align:center;padding:10px 14px;}
+  }
 </style>
 </head>
 <body>
+<div class="update-banner" id="update-banner">
+  <span>Hay una versión más reciente de esta página disponible.</span>
+  <button id="update-reload-btn">Recargar ahora</button>
+  <button id="update-dismiss-btn" aria-label="Cerrar">✕</button>
+</div>
 <div class="login-overlay" id="login-overlay">
   <div class="login-topbar">
     <div class="login-brand">
@@ -1210,6 +1242,35 @@
 <script>
 // ---- acceso ----
 // Sustituye esto por la URL de tu Worker una vez desplegado (ver DEPLOY.md).
+// Marca de version: cambiala (o simplemente deja que la actualice el script de build)
+// cada vez que publiques un index.html nuevo, para que las pestañas abiertas
+// detecten que hay una version mas reciente.
+const APP_BUILD = '2026-09-17T08:11:39Z';
+
+// ---- aviso de version nueva disponible ----
+// Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
+// su APP_BUILD con el de la version cargada; si son distintos, alguien ha
+// publicado un index.html mas reciente y avisamos para que se recargue.
+const updateBanner = document.getElementById('update-banner');
+document.getElementById('update-reload-btn').addEventListener('click', () => window.location.reload());
+document.getElementById('update-dismiss-btn').addEventListener('click', () => updateBanner.classList.remove('open'));
+
+async function checkForNewVersion(){
+  try {
+    const res = await fetch(window.location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return;
+    const html = await res.text();
+    const m = html.match(/const APP_BUILD = '([^']+)'/);
+    if (m && m[1] && m[1] !== APP_BUILD){
+      updateBanner.classList.add('open');
+    }
+  } catch (e){ /* sin red o pagina no accesible: no hacemos nada */ }
+}
+setInterval(checkForNewVersion, 5 * 60 * 1000); // cada 5 minutos
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') checkForNewVersion();
+});
+
 const AUTH_API_URL = 'https://control-estaciones-auth.victorjjm5.workers.dev';
 const AUTH_KEY = 'ib_control_estaciones_auth';
 const AUTH_EMAIL_KEY = 'ib_control_estaciones_email';
