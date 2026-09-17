@@ -1189,10 +1189,6 @@
       <div class="kpi"><span class="num" id="kpi-providers">—</span><span class="lbl">PROVEEDORES</span></div>
       <div class="kpi pend" id="kpi-pending-wrap"><span class="num" id="kpi-pending">—</span><span class="lbl">SIN ASIGNAR</span></div>
     </div>
-    <span class="data-update-badge" id="data-update-badge" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-      Datos IB 26/27 cargados el 17 sep 2026
-    </span>
     <button class="alert-pill" id="open-uncovered-panel" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
       Sin proveedor (<span id="uncovered-count">0</span>)
@@ -1201,6 +1197,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg>
       F-CAMO pendientes (<span id="fcamo-pending-count">0</span>)
     </button>
+    <span class="data-update-badge" id="data-update-badge" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      Datos IB 26/27 cargados el 17 sep 2026
+    </span>
     <button class="logout-btn" id="logout-btn">Cerrar sesión</button>
   </header>
 
@@ -1245,7 +1245,6 @@
             <span class="label-text">Solo estaciones de pernocta</span>
           </label>
           <button type="button" class="ov-see-all" id="open-pernocta-overview" style="margin-top:2px;">Ver todas las pernoctas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-          <button type="button" class="ov-see-all" id="open-fcamo-overview" style="margin-top:8px;">F-CAMO-IBE-14 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </div>
       <div class="list-header">
@@ -1384,7 +1383,7 @@
 // Marca de version: cambiala (o simplemente deja que la actualice el script de build)
 // cada vez que publiques un index.html nuevo, para que las pestañas abiertas
 // detecten que hay una version mas reciente.
-const APP_BUILD = '2026-09-17T11:58:25Z';
+const APP_BUILD = '2026-09-17T12:06:23Z';
 
 // ---- aviso de version nueva disponible ----
 // Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
@@ -2546,7 +2545,6 @@ const fcamoOverviewOverlay = document.getElementById('fcamo-overview-overlay');
 const fcamoOverviewBody = document.getElementById('fcamo-overview-body');
 const btnNewFcamo = document.getElementById('btn-new-fcamo');
 const btnCloseFcamoOverview = document.getElementById('btn-close-fcamo-overview');
-document.getElementById('open-fcamo-overview').addEventListener('click', openFcamoOverview);
 btnCloseFcamoOverview.addEventListener('click', closeFcamoOverview);
 fcamoOverviewOverlay.addEventListener('click', (e) => { if (e.target === fcamoOverviewOverlay) closeFcamoOverview(); });
 btnNewFcamo.addEventListener('click', () => renderFcamoForm());
