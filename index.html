@@ -1109,6 +1109,23 @@
   .uncov-history-item{font-size:11.5px;color:var(--ink-2);}
   .uncov-history-item b{color:var(--ink);}
   .uncov-history-time{color:var(--muted);}
+
+  /* ---- actividad reciente ---- */
+  .activity-item{
+    display:flex;gap:12px;align-items:flex-start;
+    padding:12px 0;border-bottom:1px solid var(--line-soft);
+  }
+  .activity-icon{
+    width:30px;height:30px;border-radius:8px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--bg-inset);color:var(--ink-2);
+  }
+  .activity-icon svg{width:15px;height:15px;}
+  .activity-icon.is-note{background:var(--info-bg);color:var(--info);}
+  .activity-icon.is-fcamo{background:var(--ok-bg);color:var(--ok);}
+  .activity-text{font-size:13px;color:var(--ink-2);line-height:1.45;}
+  .activity-text b{color:var(--ink);font-weight:600;}
+  .activity-time{font-size:11px;color:var(--muted);margin-top:2px;}
   .update-banner{
     display:none;
     position:fixed;left:0;right:0;bottom:0;
@@ -1277,6 +1294,7 @@
             </label>
             <button type="button" class="ov-see-all" id="open-pernocta-overview">Ver todas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
           </div>
+          <button type="button" class="ov-see-all" id="open-activity-overview" style="margin-top:8px;">Actividad reciente <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </div>
       <div class="list-header">
@@ -1382,11 +1400,29 @@
         <div class="modal-city">Checklists de apertura y actualización de estación, compartidas por el equipo</div>
       </div>
       <div class="modal-actions">
+        <button class="btn-excel" id="btn-fcamo-trash" style="background:var(--muted);display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>Papelera</button>
         <button class="btn-excel" id="btn-new-fcamo" style="background:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Nuevo F-CAMO-IBE-14</button>
         <button class="btn-close" id="btn-close-fcamo-overview">✕</button>
       </div>
     </div>
     <div class="modal-body" id="fcamo-overview-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="activity-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <div class="modal-code-row">
+          <span class="modal-code" style="font-family:'IBM Plex Sans',sans-serif;font-size:18px;">Actividad reciente</span>
+        </div>
+        <div class="modal-city">Últimos cambios en notas y checklists F-CAMO de todo el equipo</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-close" id="btn-close-activity">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="activity-body"></div>
   </div>
 </div>
 
@@ -1415,7 +1451,7 @@
 // Marca de version: cambiala (o simplemente deja que la actualice el script de build)
 // cada vez que publiques un index.html nuevo, para que las pestañas abiertas
 // detecten que hay una version mas reciente.
-const APP_BUILD = '2026-09-17T13:20:29Z';
+const APP_BUILD = '2026-09-17T16:37:57Z';
 
 // ---- aviso de version nueva disponible ----
 // Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
@@ -1444,6 +1480,7 @@ document.addEventListener('visibilitychange', () => {
 const AUTH_API_URL = 'https://control-estaciones-auth.victorjjm5.workers.dev';
 const AUTH_KEY = 'ib_control_estaciones_auth';
 const AUTH_BADGE_KEY = 'ib_control_estaciones_badge';
+const AUTH_ADMIN_KEY = 'ib_control_estaciones_admin';
 
 function updateDataBadge(){
   const show = localStorage.getItem(AUTH_BADGE_KEY) === '1';
@@ -1559,6 +1596,7 @@ loginForm.addEventListener('submit', async (e) => {
     if (res.ok && data.token){
       localStorage.setItem(AUTH_KEY, data.token);
       localStorage.setItem(AUTH_BADGE_KEY, data.show_data_badge ? '1' : '0');
+      localStorage.setItem(AUTH_ADMIN_KEY, data.is_admin ? '1' : '0');
       updateDataBadge();
       loadAppAndShow();
     } else {
@@ -1629,6 +1667,7 @@ resetForm.addEventListener('submit', async (e) => {
 logoutBtn.addEventListener('click', () => {
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem(AUTH_BADGE_KEY);
+  localStorage.removeItem(AUTH_ADMIN_KEY);
   showLogin();
 });
 
@@ -2576,10 +2615,13 @@ document.getElementById('open-fcamo-header-panel').addEventListener('click', ope
 const fcamoOverviewOverlay = document.getElementById('fcamo-overview-overlay');
 const fcamoOverviewBody = document.getElementById('fcamo-overview-body');
 const btnNewFcamo = document.getElementById('btn-new-fcamo');
+const btnFcamoTrash = document.getElementById('btn-fcamo-trash');
 const btnCloseFcamoOverview = document.getElementById('btn-close-fcamo-overview');
 btnCloseFcamoOverview.addEventListener('click', closeFcamoOverview);
 fcamoOverviewOverlay.addEventListener('click', (e) => { if (e.target === fcamoOverviewOverlay) closeFcamoOverview(); });
 btnNewFcamo.addEventListener('click', () => renderFcamoForm());
+btnFcamoTrash.addEventListener('click', openFcamoTrash);
+let fcamoShowCompleted = false;
 
 async function fcamoApi(path, options){
   const token = localStorage.getItem(AUTH_KEY);
@@ -2594,6 +2636,8 @@ async function fcamoApi(path, options){
 
 async function openFcamoOverview(){
   btnNewFcamo.style.display = '';
+  btnFcamoTrash.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
+  fcamoShowCompleted = false;
   fcamoOverviewBody.innerHTML = '<div class="no-data">Cargando…</div>';
   fcamoOverviewOverlay.classList.add('open');
   try {
@@ -2609,29 +2653,48 @@ function closeFcamoOverview(){
 
 function renderFcamoListView(items){
   btnNewFcamo.style.display = '';
+  btnFcamoTrash.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
   updateFcamoPendingBadge(items);
   if (!items.length){
     fcamoOverviewBody.innerHTML = '<div class="no-data">Todavía no hay ningún F-CAMO-IBE-14 abierto. Pulsa "Nuevo F-CAMO-IBE-14" para empezar uno.</div>';
     return;
   }
-  fcamoOverviewBody.innerHTML = items.map(item => {
-    const st = STATIONS.find(s => s.code === item.station_code);
-    const { done, total, pct } = fcamoProgress(item);
-    const reasonLabel = (FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason;
-    const firstFlight = (st && st.schedule && st.schedule.length) ? st.schedule[0][0] : null;
-    return `<div class="fcamo-list-item" data-id="${item.id}">
-      <span class="fcamo-list-code">${item.station_code}</span>
-      <span class="fcamo-list-meta">
-        <div class="fcamo-list-reason">${reasonLabel}</div>
-        <div class="fcamo-list-sub">${st ? st.city + ', ' + st.country : ''} · abierto por ${item.created_by}${firstFlight ? ' · primer vuelo ' + firstFlight : ''}</div>
-      </span>
-      <span class="fcamo-status-pill ${item.status}">${item.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'}</span>
-      <span class="fcamo-progress-wrap">
-        <div class="fcamo-progress-bar"><div class="fcamo-progress-fill" style="width:${pct}%"></div></div>
-        <div class="fcamo-progress-txt">${done}/${total}</div>
-      </span>
-    </div>`;
-  }).join('');
+  const completedCount = items.filter(i => i.status === 'completed').length;
+  const visible = fcamoShowCompleted ? items : items.filter(i => i.status !== 'completed');
+
+  let html = '';
+  if (completedCount > 0){
+    html += `<button type="button" class="ov-see-all" id="fcamo-toggle-completed" style="margin-bottom:14px;">
+      ${fcamoShowCompleted ? 'Ocultar completados' : `Ver completados (${completedCount})`}
+    </button>`;
+  }
+  if (!visible.length){
+    html += '<div class="no-data">No hay F-CAMO-IBE-14 pendientes ahora mismo.</div>';
+  } else {
+    html += visible.map(item => {
+      const st = STATIONS.find(s => s.code === item.station_code);
+      const { done, total, pct } = fcamoProgress(item);
+      const reasonLabel = (FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason;
+      const firstFlight = (st && st.schedule && st.schedule.length) ? st.schedule[0][0] : null;
+      return `<div class="fcamo-list-item" data-id="${item.id}">
+        <span class="fcamo-list-code">${item.station_code}</span>
+        <span class="fcamo-list-meta">
+          <div class="fcamo-list-reason">${reasonLabel}</div>
+          <div class="fcamo-list-sub">${st ? st.city + ', ' + st.country : ''} · abierto por ${item.created_by}${firstFlight ? ' · primer vuelo ' + firstFlight : ''}</div>
+        </span>
+        <span class="fcamo-status-pill ${item.status}">${item.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'}</span>
+        <span class="fcamo-progress-wrap">
+          <div class="fcamo-progress-bar"><div class="fcamo-progress-fill" style="width:${pct}%"></div></div>
+          <div class="fcamo-progress-txt">${done}/${total}</div>
+        </span>
+      </div>`;
+    }).join('');
+  }
+  fcamoOverviewBody.innerHTML = html;
+
+  const toggleBtn = document.getElementById('fcamo-toggle-completed');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => { fcamoShowCompleted = !fcamoShowCompleted; renderFcamoListView(items); });
+
   fcamoOverviewBody.querySelectorAll('.fcamo-list-item').forEach(el => {
     el.addEventListener('click', async () => {
       fcamoOverviewBody.innerHTML = '<div class="no-data">Cargando…</div>';
@@ -2640,6 +2703,53 @@ function renderFcamoListView(items){
         renderFcamoDetailView(item);
       } catch (err){
         fcamoOverviewBody.innerHTML = `<div class="no-data">No se ha podido cargar (${err.message}).</div>`;
+      }
+    });
+  });
+}
+
+async function openFcamoTrash(){
+  btnNewFcamo.style.display = 'none';
+  btnFcamoTrash.style.display = 'none';
+  fcamoOverviewBody.innerHTML = '<div class="no-data">Cargando…</div>';
+  try {
+    const { items } = await fcamoApi('/trash', { method: 'GET' });
+    renderFcamoTrashView(items);
+  } catch (err){
+    fcamoOverviewBody.innerHTML = `<div class="no-data">No se ha podido cargar la papelera (${err.message}).</div>`;
+  }
+}
+
+function renderFcamoTrashView(items){
+  let html = `<button class="fcamo-back" id="fcamo-trash-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Todos los F-CAMO-IBE-14</button>
+    <div class="fcamo-detail-title" style="margin-bottom:14px;">Papelera</div>`;
+  if (!items.length){
+    html += '<div class="no-data">No hay F-CAMO-IBE-14 eliminados.</div>';
+  } else {
+    html += items.map(item => {
+      const st = STATIONS.find(s => s.code === item.station_code);
+      return `<div class="fcamo-list-item" data-id="${item.id}" style="cursor:default;">
+        <span class="fcamo-list-code">${item.station_code}</span>
+        <span class="fcamo-list-meta">
+          <div class="fcamo-list-reason">${st ? st.city + ', ' + st.country : ''}</div>
+          <div class="fcamo-list-sub">eliminado por ${item.deleted_by}, ${timeAgo(item.deleted_at)}</div>
+        </span>
+        <button class="uncov-cover-btn to-cover" data-id="${item.id}">Restaurar</button>
+      </div>`;
+    }).join('');
+  }
+  fcamoOverviewBody.innerHTML = html;
+  document.getElementById('fcamo-trash-back').addEventListener('click', openFcamoOverview);
+  fcamoOverviewBody.querySelectorAll('[data-id] .uncov-cover-btn, .fcamo-list-item button').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.closest('.fcamo-list-item').dataset.id;
+      try {
+        await fcamoApi(`/${id}/restore`, { method: 'POST' });
+        openFcamoTrash();
+        refreshFcamoBadge();
+      } catch (err){
+        alert('No se ha podido restaurar: ' + err.message);
       }
     });
   });
@@ -2808,10 +2918,12 @@ async function refreshUncoveredBadge(){
 
 let uncovNotesByCode = {};
 let uncovState = {}; // code -> { editing, lockError, showHistory, historyItems }
+let uncovShowCovered = false;
 
 async function openUncoveredPanel(){
   uncoveredBody.innerHTML = '<div class="no-data">Cargando…</div>';
   uncoveredOverlay.classList.add('open');
+  uncovShowCovered = false;
   try {
     const { items } = await notesApi('', { method: 'GET' });
     uncovNotesByCode = {};
@@ -2891,10 +3003,27 @@ function renderUncoveredPanel(){
     document.getElementById('uncovered-count').textContent = '0';
     return;
   }
-  const notCovered = codes.filter(c => !(uncovNotesByCode[c] && uncovNotesByCode[c].covered)).length;
+  const isCovered = c => !!(uncovNotesByCode[c] && uncovNotesByCode[c].covered);
+  const notCovered = codes.filter(c => !isCovered(c)).length;
+  const coveredCount = codes.length - notCovered;
   document.getElementById('uncovered-count').textContent = notCovered;
 
-  uncoveredBody.innerHTML = codes.map(uncovCardHtml).join('');
+  const visibleCodes = uncovShowCovered ? codes : codes.filter(c => !isCovered(c));
+
+  let html = '';
+  if (coveredCount > 0){
+    html += `<button type="button" class="ov-see-all" id="uncov-toggle-covered" style="margin-bottom:14px;">
+      ${uncovShowCovered ? 'Ocultar cubiertas' : `Ver cubiertas (${coveredCount})`}
+    </button>`;
+  }
+  html += visibleCodes.length
+    ? visibleCodes.map(uncovCardHtml).join('')
+    : '<div class="no-data">No hay estaciones pendientes ahora mismo.</div>';
+
+  uncoveredBody.innerHTML = html;
+
+  const toggleBtn = document.getElementById('uncov-toggle-covered');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => { uncovShowCovered = !uncovShowCovered; renderUncoveredPanel(); });
 
   uncoveredBody.querySelectorAll('[data-act="edit"]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -2969,6 +3098,53 @@ function renderUncoveredPanel(){
       renderUncoveredPanel();
     });
   });
+}
+
+// ---- actividad reciente: notas + F-CAMO combinados ----
+const activityOverlay = document.getElementById('activity-overlay');
+const activityBody = document.getElementById('activity-body');
+document.getElementById('open-activity-overview').addEventListener('click', openActivityOverview);
+document.getElementById('btn-close-activity').addEventListener('click', () => activityOverlay.classList.remove('open'));
+activityOverlay.addEventListener('click', (e) => { if (e.target === activityOverlay) activityOverlay.classList.remove('open'); });
+
+const ICON_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+const ICON_FCAMO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg>';
+
+function activityText(entry){
+  if (entry.type === 'note'){
+    if (entry.action === 'covered'){
+      return `<b>${entry.changed_by}</b> marcó <b>${entry.station_code}</b> como ${entry.value === 'true' ? 'cubierta' : 'pendiente'}`;
+    }
+    const preview = entry.value.length > 90 ? entry.value.slice(0, 90) + '…' : entry.value;
+    return `<b>${entry.changed_by}</b> escribió una nota en <b>${entry.station_code}</b>: "${preview.replace(/</g,'&lt;')}"`;
+  }
+  const labels = { created:'abrió un F-CAMO-IBE-14 para', completed:'completó el checklist de', reopened:'reabrió el checklist de', deleted:'eliminó el F-CAMO-IBE-14 de', restored:'restauró el F-CAMO-IBE-14 de' };
+  return `<b>${entry.changed_by}</b> ${labels[entry.action] || entry.action} <b>${entry.station_code}</b>`;
+}
+
+async function openActivityOverview(){
+  activityBody.innerHTML = '<div class="no-data">Cargando…</div>';
+  activityOverlay.classList.add('open');
+  try {
+    const token = localStorage.getItem(AUTH_KEY);
+    const res = await fetch(`${AUTH_API_URL}/api/activity`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error de conexión');
+    if (!data.items.length){
+      activityBody.innerHTML = '<div class="no-data">Todavía no hay actividad registrada.</div>';
+      return;
+    }
+    activityBody.innerHTML = data.items.map(entry => `
+      <div class="activity-item">
+        <span class="activity-icon ${entry.type === 'note' ? 'is-note' : 'is-fcamo'}">${entry.type === 'note' ? ICON_NOTE : ICON_FCAMO}</span>
+        <span>
+          <div class="activity-text">${activityText(entry)}</div>
+          <div class="activity-time">${timeAgo(entry.changed_at)}</div>
+        </span>
+      </div>`).join('');
+  } catch (err){
+    activityBody.innerHTML = `<div class="no-data">No se ha podido conectar con el servidor (${err.message}).</div>`;
+  }
 }
 
 // ---- Excel export: replica exacta de la macro V18 ----
