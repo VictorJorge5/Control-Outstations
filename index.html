@@ -208,10 +208,12 @@
     background:var(--red);
     color:#fff;
     display:flex;
+    flex-wrap:wrap;
     align-items:center;
-    gap:18px;
-    padding:0 26px;
-    height:68px;
+    gap:14px;
+    row-gap:8px;
+    padding:12px 26px;
+    min-height:68px;
     flex-shrink:0;
     box-shadow:0 1px 0 rgba(255,255,255,0.14) inset, 0 2px 10px rgba(0,0,0,0.18);
     position:relative;
@@ -229,7 +231,7 @@
     flex-shrink:0;
   }
   .header-divider{width:1px;height:32px;background:rgba(255,255,255,0.14);flex-shrink:0;}
-  .titleblock{display:flex;flex-direction:column;line-height:1.3;gap:1px;}
+  .titleblock{display:flex;flex-direction:column;line-height:1.3;gap:1px;flex-shrink:0;}
   .titleblock .t1{font-size:16.5px;font-weight:600;letter-spacing:0.1px;}
   .titleblock .t2{font-size:12px;color:rgba(255,255,255,0.8);font-weight:400;}
   .kpis{
@@ -237,12 +239,14 @@
     display:flex;
     gap:0;
     align-items:stretch;
+    flex-shrink:0;
   }
   .kpi{
     display:flex;flex-direction:column;justify-content:center;align-items:flex-end;
     gap:3px;
     padding:0 20px;
     border-left:1px solid rgba(255,255,255,0.12);
+    flex-shrink:0;
   }
   .kpi:first-child{border-left:none;}
   .kpi .num{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:600;letter-spacing:-0.2px;line-height:1;}
@@ -1478,7 +1482,7 @@
 // Marca de version: cambiala (o simplemente deja que la actualice el script de build)
 // cada vez que publiques un index.html nuevo, para que las pestañas abiertas
 // detecten que hay una version mas reciente.
-const APP_BUILD = '2026-09-18T07:28:46Z';
+const APP_BUILD = '2026-09-18T07:46:29Z';
 
 // ---- aviso de version nueva disponible ----
 // Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
