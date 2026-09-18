@@ -1262,10 +1262,8 @@
       <span class="t2">Dirección Técnica del Operador · Outstations</span>
     </div>
     <div class="kpis">
-      <div class="kpi"><span class="num" id="kpi-total">—</span><span class="lbl">ESTACIONES</span></div>
       <div class="kpi" id="kpi-active-wrap"><span class="num" id="kpi-active">—</span><span class="lbl">CON VUELO IB 26/27</span></div>
       <div class="kpi"><span class="num" id="kpi-providers">—</span><span class="lbl">PROVEEDORES</span></div>
-      <div class="kpi pend" id="kpi-pending-wrap"><span class="num" id="kpi-pending">—</span><span class="lbl">SIN ASIGNAR</span></div>
     </div>
     <button class="alert-pill" id="open-uncovered-panel" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
@@ -1482,7 +1480,7 @@
 // Marca de version: cambiala (o simplemente deja que la actualice el script de build)
 // cada vez que publiques un index.html nuevo, para que las pestañas abiertas
 // detecten que hay una version mas reciente.
-const APP_BUILD = '2026-09-18T07:46:29Z';
+const APP_BUILD = '2026-09-18T08:12:35Z';
 
 // ---- aviso de version nueva disponible ----
 // Cada pocos minutos vuelve a pedir esta misma pagina (sin cache) y compara
@@ -1885,8 +1883,6 @@ function switchMode(mode){
     setStationOptions(sortedAltStations);
     setProviderOptions(allAltProviders);
     document.getElementById('kpi-active-wrap').style.display = 'none';
-    document.getElementById('kpi-pending-wrap').style.display = 'none';
-    document.getElementById('kpi-total').textContent = ALT_STATIONS.length;
     document.getElementById('kpi-providers').textContent = allAltProviders.length;
   } else {
     Object.values(altMarkers).forEach(m => { if (map.hasLayer(m)) map.removeLayer(m); });
@@ -1894,11 +1890,8 @@ function switchMode(mode){
     setStationOptions(sortedStations);
     setProviderOptions(allProviders);
     document.getElementById('kpi-active-wrap').style.display = '';
-    document.getElementById('kpi-pending-wrap').style.display = '';
-    document.getElementById('kpi-total').textContent = STATIONS.length;
     document.getElementById('kpi-providers').textContent = allProviders.length;
     document.getElementById('kpi-active').textContent = STATIONS.filter(s => s.in_schedule).length;
-    document.getElementById('kpi-pending').textContent = STATIONS.filter(s => s.pending).length;
   }
   stationEl.value = '';
   providerEl.value = '';
@@ -2152,10 +2145,8 @@ function setActiveSuggestItem(idx){
 
 render();
 
-document.getElementById('kpi-total').textContent = STATIONS.length;
 document.getElementById('kpi-active').textContent = STATIONS.filter(s => s.in_schedule).length;
 document.getElementById('kpi-providers').textContent = allProviders.length;
-document.getElementById('kpi-pending').textContent = STATIONS.filter(s => s.pending).length;
 
 refreshUncoveredBadge();
 refreshFcamoBadge();
