@@ -1324,6 +1324,7 @@
             <button type="button" class="ov-see-all" id="open-pernocta-overview">Ver todas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
           </div>
           <button type="button" class="ov-see-all" id="open-activity-overview" style="margin-top:8px;">Actividad reciente <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <button type="button" class="ov-see-all" id="open-users-panel" style="margin-top:8px;display:none;">Usuarios <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
       </div>
       <div class="list-header">
@@ -1472,6 +1473,24 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="users-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <div class="modal-code-row">
+          <span class="modal-code" style="font-family:'IBM Plex Sans',sans-serif;font-size:18px;">Usuarios</span>
+        </div>
+        <div class="modal-city">Altas, permisos y contraseñas de acceso a la app</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-excel" id="btn-new-user" style="background:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Nuevo usuario</button>
+        <button class="btn-close" id="btn-close-users">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="users-body"></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
@@ -1510,6 +1529,7 @@ const AUTH_API_URL = 'https://control-estaciones-auth.victorjjm5.workers.dev';
 const AUTH_KEY = 'ib_control_estaciones_auth';
 const AUTH_BADGE_KEY = 'ib_control_estaciones_badge';
 const AUTH_ADMIN_KEY = 'ib_control_estaciones_admin';
+const AUTH_EMAIL_KEY = 'ib_control_estaciones_email';
 
 function updateDataBadge(){
   const show = localStorage.getItem(AUTH_BADGE_KEY) === '1';
@@ -1540,6 +1560,8 @@ const loginLoading = document.getElementById('login-loading');
 function showApp(){
   loginOverlay.style.display = 'none';
   appEl.classList.add('visible');
+  const usersBtn = document.getElementById('open-users-panel');
+  if (usersBtn) usersBtn.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
   if (window.__map){
     setTimeout(() => window.__map.invalidateSize(), 50);
   }
@@ -1626,6 +1648,7 @@ loginForm.addEventListener('submit', async (e) => {
       localStorage.setItem(AUTH_KEY, data.token);
       localStorage.setItem(AUTH_BADGE_KEY, data.show_data_badge ? '1' : '0');
       localStorage.setItem(AUTH_ADMIN_KEY, data.is_admin ? '1' : '0');
+      localStorage.setItem(AUTH_EMAIL_KEY, data.email || '');
       updateDataBadge();
       loadAppAndShow();
     } else {
@@ -1697,6 +1720,7 @@ logoutBtn.addEventListener('click', () => {
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem(AUTH_BADGE_KEY);
   localStorage.removeItem(AUTH_ADMIN_KEY);
+  localStorage.removeItem(AUTH_EMAIL_KEY);
   showLogin();
 });
 
@@ -3214,6 +3238,136 @@ async function openActivityOverview(){
   } catch (err){
     activityBody.innerHTML = `<div class="no-data">No se ha podido conectar con el servidor (${err.message}).</div>`;
   }
+}
+
+// ---- gestion de usuarios (solo visible/operativo para admin; el Worker
+// vuelve a comprobar is_admin en cada llamada, esto es solo la interfaz) ----
+const usersOverlay = document.getElementById('users-overlay');
+const usersBody = document.getElementById('users-body');
+const btnNewUser = document.getElementById('btn-new-user');
+const btnCloseUsers = document.getElementById('btn-close-users');
+document.getElementById('open-users-panel').addEventListener('click', openUsersPanel);
+btnCloseUsers.addEventListener('click', () => usersOverlay.classList.remove('open'));
+usersOverlay.addEventListener('click', (e) => { if (e.target === usersOverlay) usersOverlay.classList.remove('open'); });
+btnNewUser.addEventListener('click', renderNewUserForm);
+
+async function usersApi(path, options){
+  const token = localStorage.getItem(AUTH_KEY);
+  const res = await fetch(`${AUTH_API_URL}/api/admin-users${path}`, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(options && options.headers) },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Error de conexión');
+  return data;
+}
+
+async function openUsersPanel(){
+  btnNewUser.style.display = '';
+  usersBody.innerHTML = '<div class="no-data">Cargando…</div>';
+  usersOverlay.classList.add('open');
+  try {
+    const { items } = await usersApi('', { method: 'GET' });
+    renderUsersListView(items);
+  } catch (err){
+    usersBody.innerHTML = `<div class="no-data">No se ha podido conectar con el servidor (${err.message}).</div>`;
+  }
+}
+
+function renderUsersListView(items){
+  btnNewUser.style.display = '';
+  const me = localStorage.getItem(AUTH_EMAIL_KEY) || '';
+  usersBody.innerHTML = items.map(u => `
+    <div class="fcamo-list-item" style="cursor:default;flex-wrap:wrap;gap:10px 18px;">
+      <span class="fcamo-list-code" style="min-width:200px;">${u.email}${u.email === me ? ' <span style="font-weight:500;color:var(--muted-2);font-size:11px;">(tú)</span>' : ''}</span>
+      <span class="fcamo-list-meta" style="flex:1;">
+        <div class="fcamo-list-sub">Alta ${new Date(u.created_at * 1000).toLocaleDateString('es-ES')}${u.updated_at ? ' · última actualización ' + timeAgo(u.updated_at) : ''}</div>
+      </span>
+      <label class="switch-row" style="margin:0;width:auto;">
+        <span class="switch"><input type="checkbox" class="user-toggle-admin" data-email="${u.email}" ${u.is_admin ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
+        <span class="label-text">Admin</span>
+      </label>
+      <label class="switch-row" style="margin:0;width:auto;">
+        <span class="switch"><input type="checkbox" class="user-toggle-badge" data-email="${u.email}" ${u.show_data_badge ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
+        <span class="label-text">Aviso datos</span>
+      </label>
+      <button type="button" class="ov-see-all user-reset-btn" data-email="${u.email}" style="margin:0;">Resetear contraseña</button>
+      <button type="button" class="fcamo-delete-btn user-delete-btn" data-email="${u.email}" ${u.email === me ? 'disabled style="opacity:.35;cursor:not-allowed;"' : ''}>Eliminar</button>
+    </div>`).join('');
+
+  usersBody.querySelectorAll('.user-toggle-admin').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const wasChecked = !cb.checked;
+      try {
+        await usersApi(`/${encodeURIComponent(cb.dataset.email)}`, { method:'PATCH', body: JSON.stringify({ is_admin: cb.checked }) });
+      } catch (err){
+        cb.checked = wasChecked;
+        alert('No se ha podido cambiar: ' + err.message);
+      }
+    });
+  });
+  usersBody.querySelectorAll('.user-toggle-badge').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const wasChecked = !cb.checked;
+      try {
+        await usersApi(`/${encodeURIComponent(cb.dataset.email)}`, { method:'PATCH', body: JSON.stringify({ show_data_badge: cb.checked }) });
+      } catch (err){
+        cb.checked = wasChecked;
+        alert('No se ha podido cambiar: ' + err.message);
+      }
+    });
+  });
+  usersBody.querySelectorAll('.user-reset-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm(`¿Generar una contraseña temporal nueva para ${btn.dataset.email}? La anterior dejará de funcionar.`)) return;
+      try {
+        const { temp_password } = await usersApi(`/${encodeURIComponent(btn.dataset.email)}`, { method:'PATCH', body: JSON.stringify({ reset_password: true }) });
+        prompt(`Contraseña temporal para ${btn.dataset.email} (cópiala y pásasela; no se volverá a mostrar):`, temp_password);
+      } catch (err){
+        alert('No se ha podido resetear: ' + err.message);
+      }
+    });
+  });
+  usersBody.querySelectorAll('.user-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (btn.disabled) return;
+      if (!confirm(`¿Eliminar la cuenta ${btn.dataset.email}? No se puede deshacer.`)) return;
+      try {
+        await usersApi(`/${encodeURIComponent(btn.dataset.email)}`, { method:'DELETE' });
+        const { items } = await usersApi('', { method: 'GET' });
+        renderUsersListView(items);
+      } catch (err){
+        alert('No se ha podido eliminar: ' + err.message);
+      }
+    });
+  });
+}
+
+function renderNewUserForm(){
+  btnNewUser.style.display = 'none';
+  usersBody.innerHTML = `
+    <button class="fcamo-back" id="user-form-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Todos los usuarios</button>
+    <div class="fcamo-detail-title" style="margin-bottom:18px;">Nuevo usuario</div>
+    <div class="fcamo-form-grid">
+      <div class="fcamo-form-field"><label>Email @iberia.es</label><input type="text" id="user-f-email" placeholder="nombre.apellido@iberia.es"></div>
+    </div>
+    <label class="fcamo-checkrow"><input type="checkbox" id="user-f-admin">Permisos de administrador</label>
+    <label class="fcamo-checkrow"><input type="checkbox" id="user-f-badge">Ve el aviso de "datos actualizados"</label>
+    <button class="login-btn" id="user-f-submit" style="margin-top:20px;width:auto;padding:11px 22px;">Crear usuario</button>
+  `;
+  document.getElementById('user-form-back').addEventListener('click', openUsersPanel);
+  document.getElementById('user-f-submit').addEventListener('click', async () => {
+    const emailVal = document.getElementById('user-f-email').value.trim().toLowerCase();
+    const is_admin = document.getElementById('user-f-admin').checked;
+    const show_data_badge = document.getElementById('user-f-badge').checked;
+    try {
+      const { temp_password } = await usersApi('', { method:'POST', body: JSON.stringify({ email: emailVal, is_admin, show_data_badge }) });
+      alert(`Usuario creado. Contraseña temporal para ${emailVal} (cópiala y pásasela; no se volverá a mostrar):\n\n${temp_password}`);
+      openUsersPanel();
+    } catch (err){
+      alert('No se ha podido crear: ' + err.message);
+    }
+  });
 }
 
 // ---- Excel export: replica exacta de la macro V18 ----
