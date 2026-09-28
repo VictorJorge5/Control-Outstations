@@ -374,7 +374,8 @@
   .trk-btn.primary:hover{background:var(--red-700);}
   .trk-x{background:none;border:none;color:var(--muted-2);font-size:14px;cursor:pointer;padding:4px 7px;border-radius:6px;}
   .trk-x:hover{background:var(--bg-inset);color:var(--red);}
-  .trk-sec textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:var(--radius-sm);font:13px 'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--ink);}
+  .trk-add{display:flex;gap:8px;margin-top:12px;}
+  .trk-add input,.trk-sec textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:var(--radius-sm);font:13px 'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--ink);}
   .trk-sec textarea{resize:vertical;}
   .trk-btnrow{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;}
   .trk-updated{font-size:11.5px;color:var(--muted);}
@@ -3174,8 +3175,8 @@ async function openFcamoDetailById(id){
 // ==== SEGUIMIENTO: INICIO ====
 // Estaciones con vuelo y sin proveedor contratado. Por cada estacion solo importan tres cosas:
 // a quien hemos contactado, a quien hemos elegido y en que situacion esta la estacion.
-// Los proveedores que pueden cubrirla salen SOLO de los datos de proveedores no contratados
-// (la lista se actualiza cargando datos nuevos, no desde esta pantalla).
+// Los proveedores que pueden cubrirla salen de los datos de proveedores no contratados. Si hace falta
+// se puede apuntar otro solo para esa estacion; eso vive unicamente aqui (no toca esos datos).
 
 const TRK_STAGES = [
   { v:'none',      label:'Sin gestionar',        hint:'Todavía no hemos contactado con ningún proveedor.' },
@@ -3270,8 +3271,8 @@ function trkSuggestions(code){
   if (s) (s.alt_providers || []).forEach(add);
   return out;
 }
-// una fila por proveedor del listado; si un proveedor apuntado ya no figura en el listado
-// (porque se actualizaron los datos) se sigue mostrando para no perder el seguimiento
+// una fila por proveedor del listado + los apuntados que no estan en el listado (a mano, o porque
+// se actualizaron los datos): se siguen mostrando para no perder el seguimiento
 function trkProviderRows(code){
   const stored = TRK.cands[code] || [];
   const byName = new Map(stored.map(c => [c.provider_name.trim().toLowerCase(), c]));
@@ -3421,7 +3422,7 @@ function trkProviderHtml(r){
   return `<div class="trk-prov ${chosen ? 'is-chosen' : ''}">
     <div class="trk-prov-main">
       <div class="trk-prov-name">${escHtml(r.name)}${r.easa ? `<span class="trk-easa">EASA ${escHtml(r.easa)}</span>` : ''}${chosen ? '<span class="trk-tag">ELEGIDO</span>' : ''}</div>
-      ${contact ? `<div class="trk-prov-contact">${contact}</div>` : (r.orphan ? '<div class="trk-prov-contact">Ya no figura en el listado de proveedores</div>' : '')}
+      ${contact ? `<div class="trk-prov-contact">${contact}</div>` : (r.orphan ? '<div class="trk-prov-contact">Fuera del listado de proveedores no contratados</div>' : '')}
     </div>
     <label class="trk-contacted ${chosen ? 'is-locked' : ''}">
       <input type="checkbox" data-act="contacted" data-name="${key}" ${state !== 'identified' ? 'checked' : ''} ${chosen ? 'disabled' : ''}>
@@ -3469,7 +3470,12 @@ function trkDetailHtml(code){
 
   <section class="trk-sec">
     <h3>Proveedores que pueden cubrirla <span class="trk-count">${rows.length}</span></h3>
-    ${rows.length ? rows.map(trkProviderHtml).join('') : '<div class="trk-empty small">No hay proveedores registrados para esta estación en el listado.</div>'}
+    ${rows.length ? rows.map(trkProviderHtml).join('') : '<div class="trk-empty small">No hay proveedores en el listado para esta estación. Puedes apuntar uno abajo.</div>'}
+    <div class="trk-add">
+      <input type="text" id="trk-add-name" data-keep placeholder="¿Otro proveedor que pueda cubrirla? Escribe su nombre…" maxlength="120" autocomplete="off">
+      <button type="button" class="trk-btn primary" data-act="add">Añadir</button>
+    </div>
+    <p class="trk-hint">Solo se apunta en el seguimiento de esta estación; no se añade al listado de proveedores ni aparece en otro sitio.</p>
   </section>
 
   <section class="trk-sec">
@@ -3588,6 +3594,15 @@ function trkSetProvider(code, name, status){
       const c = trkCandOf(code, el.dataset.name);
       if (!c || !confirm(`¿Quitar a ${c.provider_name} de la lista de ${code}?`)) return;
       trkMutate(code, () => trkApi(`/candidates/${c.id}`, { method:'DELETE' }), 'Proveedor quitado');
+    } else if (act === 'add'){
+      const input = document.getElementById('trk-add-name');
+      const name = input.value.trim();
+      if (!name){ trkToast('Escribe el nombre del proveedor', true); input.focus(); return; }
+      if (trkCandOf(code, name) || trkSuggestions(code).some(s => s.name.toLowerCase() === name.toLowerCase())){
+        trkToast('Ese proveedor ya está en la lista', true); return;
+      }
+      trkMutate(code, () => trkApi(`/${code}/candidates`, { method:'POST', body: JSON.stringify({ provider_name:name }) }), 'Proveedor añadido a esta estación')
+        .then(snap => { if (snap){ const n = document.getElementById('trk-add-name'); if (n){ n.value = ''; n.focus(); } } });
     } else if (act === 'save-note'){
       const text = document.getElementById('trk-note').value;
       trkMutate(code, () => trkApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ note:text }) }), 'Notas guardadas');
@@ -3602,6 +3617,7 @@ function trkSetProvider(code, name, status){
 
   root.addEventListener('keydown', e => {
     if (e.key === 'Enter' && e.target.matches('[data-act="open"]')){ e.preventDefault(); trkOpen(e.target.dataset.code); }
+    else if (e.key === 'Enter' && e.target.id === 'trk-add-name'){ e.preventDefault(); root.querySelector('[data-act="add"]').click(); }
   });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && TRK.active && !TRK.code) trkLoad(); });
 })();
