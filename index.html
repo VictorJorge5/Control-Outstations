@@ -260,7 +260,7 @@
   .app.home-mode .kpis{display:none !important;}
   /* Estos accesos ahora viven en la pagina de inicio; los elementos siguen en el DOM
      (llevan contadores y listeners) pero no se ven ni en el mapa ni en la cabecera. */
-  #open-uncovered-panel, #open-fcamo-header-panel, #open-activity-overview, #open-users-panel{display:none !important;}
+  #open-fcamo-header-panel, #open-activity-overview, #open-users-panel{display:none !important;}
   header .logo{cursor:pointer;}
   .home-inner{max-width:920px;margin:0 auto;}
   .home-title{font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;}
@@ -286,6 +286,114 @@
   .home-tile-count{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--ink);flex-shrink:0;}
   .home-tile.warn .home-tile-count{color:var(--amber);}
   @media (max-width:880px){ .home-view{padding:24px 16px 36px;} }
+
+  /* ---------- SEGUIMIENTO DE ESTACIONES SIN PROVEEDOR ---------- */
+  .tracking-view{display:none;flex:1;min-height:0;overflow-y:auto;background:var(--bg);padding:26px 28px 56px;
+    --blue:#1F5F9B;--blue-bg:#E4EEF8;--indigo:#3A4FA3;--indigo-bg:#E8EBF8;}
+  .app.tracking-mode .tracking-view{display:block;}
+  .app.tracking-mode .body{display:none;}
+  .app.tracking-mode .kpis{display:none !important;}
+  .trk-inner{max-width:1000px;margin:0 auto;}
+  .trk-back{background:none;border:none;color:var(--muted);font:600 12.5px 'IBM Plex Sans',sans-serif;cursor:pointer;padding:0;margin-bottom:10px;}
+  .trk-back:hover{color:var(--red);}
+  .trk-title{font-size:22px;font-weight:700;color:var(--ink);}
+  .trk-sub{font-size:13px;color:var(--muted);margin:2px 0 18px;}
+  .trk-st-none{--c:#66707E;--cbg:#EAECEF;}
+  .trk-st-searching{--c:var(--blue);--cbg:var(--blue-bg);}
+  .trk-st-selected{--c:var(--amber);--cbg:var(--amber-bg);}
+  .trk-st-interim{--c:var(--indigo);--cbg:var(--indigo-bg);}
+  .trk-st-covered{--c:var(--ok);--cbg:var(--ok-bg);}
+
+  .trk-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px;}
+  .trk-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 auto;}
+  .trk-chip{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font:600 12px 'IBM Plex Sans',sans-serif;color:var(--muted);cursor:pointer;}
+  .trk-chip b{font-family:'IBM Plex Mono',monospace;margin-left:4px;color:var(--ink-2);}
+  .trk-chip:hover{border-color:var(--muted-2);}
+  .trk-chip.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .trk-chip.on b{color:#fff;}
+  .trk-search{position:relative;flex:0 1 280px;}
+  .trk-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted-2);}
+  .trk-search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line);border-radius:8px;font:13px 'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--ink);}
+
+  .trk-list{display:flex;flex-direction:column;gap:8px;}
+  .trk-row{display:grid;grid-template-columns:64px minmax(180px,1.2fr) minmax(200px,1.3fr) auto;gap:16px;align-items:center;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:13px 16px;cursor:pointer;
+    transition:border-color .12s ease, box-shadow .12s ease;}
+  .trk-row:hover{border-color:var(--muted-2);box-shadow:var(--shadow-md);}
+  .trk-row:focus-visible{outline:2px solid var(--red);outline-offset:1px;}
+  .trk-row.u-crit{border-left:3px solid var(--red);}
+  .trk-row.u-high{border-left:3px solid var(--amber);}
+  .trk-code{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;background:var(--bg-inset);border-radius:5px;padding:3px 7px;text-align:center;}
+  .trk-code.big{font-size:17px;padding:6px 11px;}
+  .trk-city{font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .trk-flight{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .trk-flight.crit{color:var(--red);font-weight:600;}
+  .trk-flight.high{color:var(--amber);font-weight:600;}
+  .trk-row-prov{font-size:12.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .trk-row-prov b{color:var(--ink);}
+  .trk-k{font-size:11px;font-weight:600;color:var(--muted-2);margin-right:6px;}
+  .trk-none{color:var(--muted-2);font-style:italic;}
+  .trk-pill{display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--cbg);color:var(--c);white-space:nowrap;}
+
+  .trk-empty{padding:40px 10px;color:var(--muted);text-align:center;font-size:13px;}
+  .trk-empty.small{padding:10px 2px;text-align:left;font-size:12.5px;}
+  .trk-link{background:none;border:none;color:var(--red);font:600 12px 'IBM Plex Sans',sans-serif;cursor:pointer;text-decoration:underline;padding:0;}
+
+  /* estacion */
+  .trk-dhead{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+  .trk-dcity{font-size:19px;font-weight:700;color:var(--ink);}
+  .trk-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:6px;}
+  .trk-summary > div{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:13.5px;overflow-wrap:anywhere;}
+  .trk-summary .trk-k{margin:0;}
+  .trk-summary .trk-pill{align-self:flex-start;}
+  .trk-sec{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);padding:16px 18px;margin-top:12px;}
+  .trk-sec h3{font-size:13px;font-weight:700;color:var(--ink);margin:0 0 12px;display:flex;align-items:center;gap:8px;}
+  .trk-count{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--bg-inset);border-radius:999px;padding:1px 8px;color:var(--ink-2);}
+  .trk-seg-ctl{display:flex;flex-wrap:wrap;gap:6px;}
+  .trk-seg-ctl button{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font:600 12.5px 'IBM Plex Sans',sans-serif;color:var(--muted);cursor:pointer;}
+  .trk-seg-ctl button:hover{border-color:var(--c);color:var(--c);}
+  .trk-seg-ctl button.on{background:var(--cbg);color:var(--c);border-color:var(--c);}
+  .trk-hint{font-size:12px;color:var(--muted);margin:10px 0 0;line-height:1.5;}
+  .trk-hint span{color:var(--muted-2);}
+
+  .trk-prov{display:flex;align-items:center;gap:14px;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius-md);margin-bottom:8px;}
+  .trk-prov.is-chosen{background:var(--ok-bg);border-color:#C9E6D6;}
+  .trk-prov-main{flex:1;min-width:0;}
+  .trk-prov-name{font-size:13.5px;font-weight:700;color:var(--ink);overflow-wrap:anywhere;}
+  .trk-easa{font-size:10.5px;font-weight:600;color:var(--muted);background:var(--bg-inset);border-radius:4px;padding:1px 6px;margin-left:8px;}
+  .trk-prov-contact{font-size:12px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere;}
+  .trk-tag{font-size:9.5px;font-weight:700;letter-spacing:0.3px;padding:2px 8px;border-radius:999px;background:var(--ok);color:#fff;margin-left:8px;vertical-align:middle;}
+  .trk-contacted{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer;white-space:nowrap;}
+  .trk-contacted input{width:17px;height:17px;accent-color:var(--red);cursor:pointer;}
+  .trk-contacted.is-locked{opacity:.6;cursor:default;}
+  .trk-btn{font:600 12px 'IBM Plex Sans',sans-serif;padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer;white-space:nowrap;}
+  .trk-btn:hover{background:var(--bg);}
+  .trk-btn.choose{border-color:var(--ok);color:var(--ok);}
+  .trk-btn.choose:hover{background:var(--ok-bg);}
+  .trk-btn.primary{background:var(--red);color:#fff;border-color:var(--red);}
+  .trk-btn.primary:hover{background:var(--red-700);}
+  .trk-x{background:none;border:none;color:var(--muted-2);font-size:14px;cursor:pointer;padding:4px 7px;border-radius:6px;}
+  .trk-x:hover{background:var(--bg-inset);color:var(--red);}
+  .trk-add{display:flex;gap:8px;margin-top:12px;}
+  .trk-add input,.trk-sec textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:var(--radius-sm);font:13px 'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--ink);}
+  .trk-sec textarea{resize:vertical;}
+  .trk-btnrow{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;}
+  .trk-updated{font-size:11.5px;color:var(--muted);}
+  .trk-fcamo{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 12px;font:600 12px 'IBM Plex Sans',sans-serif;color:var(--ink-2);cursor:pointer;}
+  .trk-fcamo:hover{background:var(--bg-inset);}
+  .trk-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;
+    font:13px 'IBM Plex Sans',sans-serif;box-shadow:var(--shadow-md);opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease;z-index:3000;max-width:90vw;}
+  .trk-toast.show{opacity:1;transform:translateX(-50%);}
+  .trk-toast.err{background:var(--red);}
+  @media (max-width:880px){
+    .tracking-view{padding:18px 14px 44px;}
+    .trk-row{grid-template-columns:56px 1fr;gap:6px 12px;}
+    .trk-row-prov,.trk-row .trk-pill{grid-column:1 / -1;}
+    .trk-row .trk-pill{justify-self:start;}
+    .trk-summary{grid-template-columns:1fr;}
+    .trk-prov{flex-wrap:wrap;}
+    .trk-search{flex:1 1 100%;}
+  }
 
   /* ---------- BODY LAYOUT ---------- */
   .body{
@@ -1103,87 +1211,13 @@
   .fcamo-detail-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
   .fcamo-save-note{font-size:11px;color:var(--ok);margin-left:8px;opacity:0;transition:opacity .3s ease;}
   .fcamo-save-note.show{opacity:1;}
+  .fcamo-restore-btn{
+    font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;
+    border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;
+    background:var(--ok);color:#fff;border:1px solid var(--ok);
+  }
   .fcamo-delete-btn{font-size:11.5px;color:var(--red);background:none;border:none;cursor:pointer;text-decoration:underline;}
 
-  /* ---- estaciones sin proveedor ---- */
-  .uncov-card{
-    border:1px solid var(--line);border-radius:var(--radius-md);
-    padding:16px;margin-bottom:14px;
-  }
-  .uncov-card.is-covered{background:var(--ok-bg);border-color:#C9E6D6;}
-  .uncov-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
-  .uncov-head-left{display:flex;align-items:center;gap:10px;}
-  .uncov-code{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;background:var(--bg-inset);border-radius:5px;padding:4px 8px;}
-  .uncov-city{font-size:12.5px;color:var(--muted);}
-  .uncov-textarea{
-    width:100%;min-height:70px;
-    border:1px solid var(--line);border-radius:var(--radius-sm);
-    padding:9px 11px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;
-    background:var(--surface);color:var(--ink);resize:vertical;
-  }
-  .uncov-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;}
-  .uncov-save-note{font-size:11px;color:var(--ok);opacity:0;transition:opacity .3s ease;}
-  .uncov-save-note.show{opacity:1;}
-  .uncov-cover-btn{
-    font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;
-    border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;border:1px solid;
-  }
-  .uncov-cover-btn.to-cover{background:var(--ok);color:#fff;border-color:var(--ok);}
-  .uncov-cover-btn.to-uncover{background:var(--surface);color:var(--muted);border-color:var(--line);}
-  .uncov-stage-select{
-    font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;font-weight:600;
-    border:1px solid var(--line);border-radius:999px;
-    padding:5px 10px;cursor:pointer;background:var(--surface);
-    flex-shrink:0;
-  }
-  .uncov-stage-select.stage-none{color:var(--muted);}
-  .uncov-stage-select.stage-contacted{color:var(--ink-2);background:var(--bg-inset);border-color:var(--line);}
-  .uncov-stage-select.stage-negotiating{color:var(--amber);background:var(--amber-bg);border-color:#EAD6AC;}
-  .uncov-stage-select.stage-interim{color:var(--moon);background:#EEF0F2;border-color:var(--line);}
-  .uncov-stage-select.stage-covered{color:var(--ok);background:var(--ok-bg);border-color:#C9E6D6;}
-  .uncov-stage-pill{
-    font-size:9.5px;font-weight:700;letter-spacing:0.3px;
-    padding:3px 8px;border-radius:999px;flex-shrink:0;
-  }
-  .uncov-stage-pill.stage-none{background:var(--bg-inset);color:var(--muted);}
-  .uncov-stage-pill.stage-contacted{background:var(--bg-inset);color:var(--ink-2);}
-  .uncov-stage-pill.stage-negotiating{background:var(--amber-bg);color:var(--amber);}
-  .uncov-stage-pill.stage-interim{background:#EEF0F2;color:var(--moon);}
-  .uncov-stage-pill.stage-covered{background:var(--ok-bg);color:var(--ok);}
-  .fcamo-list-item.is-covered-row{background:var(--ok-bg);border-color:#C9E6D6;}
-  .uncov-field-label{font-size:10.5px;font-weight:600;color:var(--muted-2);margin-bottom:5px;}
-  .uncov-input{
-    width:100%;padding:8px 10px;
-    border:1px solid var(--line);border-radius:var(--radius-sm);
-    font-family:'IBM Plex Sans',sans-serif;font-size:13px;
-    background:var(--surface);color:var(--ink);
-  }
-  .uncov-candidate{font-size:12.5px;color:var(--ink-2);margin-bottom:8px;}
-  .uncov-candidate b{color:var(--muted-2);font-weight:600;}
-  .uncov-fcamo-link{
-    display:inline-block;margin-top:10px;
-    background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);
-    padding:7px 11px;font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;font-weight:600;
-    color:var(--ink-2);cursor:pointer;
-  }
-  .uncov-fcamo-link:hover{background:var(--bg-inset);}
-  .uncov-note-text{font-size:13px;color:var(--ink-2);line-height:1.5;white-space:pre-wrap;}
-  .uncov-empty{color:var(--muted);font-style:italic;}
-  .uncov-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:11px;color:var(--muted);flex-wrap:wrap;}
-  .uncov-meta b{color:var(--ink-2);font-weight:600;}
-  .uncov-history-link{background:none;border:none;color:var(--red);font-size:11px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline;flex-shrink:0;}
-  .uncov-locked-msg{margin-top:10px;font-size:12px;color:var(--amber);background:var(--amber-bg);border-radius:var(--radius-sm);padding:8px 10px;}
-  .uncov-edit-actions{display:flex;gap:8px;margin-top:10px;}
-  .uncov-edit-btn{
-    font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;
-    background:var(--surface);color:var(--ink-2);border:1px solid var(--line);
-    border-radius:var(--radius-sm);padding:8px 14px;cursor:pointer;
-  }
-  .uncov-edit-btn:hover{background:var(--bg);}
-  .uncov-history-panel{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px;}
-  .uncov-history-item{font-size:11.5px;color:var(--ink-2);}
-  .uncov-history-item b{color:var(--ink);}
-  .uncov-history-time{color:var(--muted);}
 
   /* ---- actividad reciente ---- */
   .activity-item{
@@ -1309,10 +1343,6 @@
       <div class="kpi" id="kpi-active-wrap"><span class="num" id="kpi-active">—</span><span class="lbl">CON VUELO IB 26/27</span></div>
       <div class="kpi"><span class="num" id="kpi-providers">—</span><span class="lbl">PROVEEDORES</span></div>
     </div>
-    <button class="alert-pill" id="open-uncovered-panel" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-      Sin proveedor (<span id="uncovered-count">0</span>)
-    </button>
     <button class="alert-pill" id="open-fcamo-header-panel" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg>
       F-CAMO (<span id="fcamo-pending-count">0</span>)
@@ -1365,6 +1395,24 @@
         <span class="home-tile-count"><span id="home-c-activity"></span></span>
       </button>
       </div>
+    </div>
+  </div>
+
+  <div class="tracking-view" id="tracking-view">
+    <div class="trk-inner">
+      <div id="trk-list-head">
+        <button type="button" class="trk-back" id="trk-back-home">← Inicio</button>
+        <div class="trk-title">Estaciones sin proveedor</div>
+        <div class="trk-sub">Con vuelo y sin proveedor contratado: a quién hemos contactado, a quién hemos elegido y cómo está cada estación</div>
+        <div class="trk-toolbar">
+          <div class="trk-chips" id="trk-chips"></div>
+          <div class="trk-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="trk-search" placeholder="Buscar estación o proveedor…" autocomplete="off">
+          </div>
+        </div>
+      </div>
+      <div id="trk-content"></div>
     </div>
   </div>
 
@@ -1544,22 +1592,6 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="uncovered-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title-block">
-        <div class="modal-code-row">
-          <span class="modal-code" style="font-family:'IBM Plex Sans',sans-serif;font-size:18px;">Estaciones sin proveedor</span>
-        </div>
-        <div class="modal-city">Seguimiento de estaciones con vuelo pero sin proveedor contratado</div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn-close" id="btn-close-uncovered">✕</button>
-      </div>
-    </div>
-    <div class="modal-body" id="uncovered-body"></div>
-  </div>
-</div>
 
 <div class="modal-overlay" id="users-overlay">
   <div class="modal">
@@ -1694,21 +1726,32 @@ function refreshHomeCounts(){
   if (typeof renderHomeStats === 'function') renderHomeStats();
 }
 function enterHome(){
+  appEl.classList.remove('tracking-mode');
+  if (typeof trkLeave === 'function') trkLeave();
   appEl.classList.add('home-mode');
   refreshHomeCounts();
   if (typeof refreshHomeExtras === 'function') refreshHomeExtras();
 }
-function enterMap(){
+function enterTracking(code){
   appEl.classList.remove('home-mode');
+  appEl.classList.add('tracking-mode');
+  if (typeof trkEnter === 'function') trkEnter(code);
+}
+function enterMap(){
+  if (typeof trkLeave === 'function') trkLeave();
+  appEl.classList.remove('home-mode', 'tracking-mode');
   if (window.__map){
     setTimeout(() => window.__map.invalidateSize(), 50);
   }
 }
 function goHome(){ if (location.hash !== '#inicio') location.hash = '#inicio'; else enterHome(); }
+function goTracking(){ if (location.hash !== '#seguimiento') location.hash = '#seguimiento'; else enterTracking(null); }
 function goMap(){ if (location.hash !== '#mapa') location.hash = '#mapa'; else enterMap(); }
 function applyRoute(){
   if (!appEl.classList.contains('visible')) return;
+  const track = /^#seguimiento(?:\/([A-Za-z0-9]{3,4}))?$/.exec(location.hash);
   if (location.hash === '#mapa') enterMap();
+  else if (track) enterTracking(track[1] ? track[1].toUpperCase() : null);
   else {
     if (location.hash !== '#inicio') history.replaceState(null, '', '#inicio');
     enterHome();
@@ -1719,10 +1762,10 @@ const headerLogo = document.querySelector('header .logo');
 headerLogo.title = 'Ir al inicio';
 headerLogo.addEventListener('click', goHome);
 document.getElementById('home-t-contracted').addEventListener('click', () => { goMap(); switchMode('main'); });
+document.getElementById('home-t-uncov').addEventListener('click', goTracking);
 document.getElementById('home-t-alt').addEventListener('click', () => { goMap(); switchMode('alt'); });
 [
   ['home-t-fcamo', 'open-fcamo-header-panel'],
-  ['home-t-uncov', 'open-uncovered-panel'],
   ['home-t-pernocta', 'open-pernocta-overview'],
   ['home-t-users', 'open-users-panel'],
   ['home-t-activity', 'open-activity-overview'],
@@ -2943,13 +2986,13 @@ function renderFcamoTrashView(items){
           <div class="fcamo-list-reason">${st ? st.city + ', ' + st.country : ''}</div>
           <div class="fcamo-list-sub">eliminado por ${item.deleted_by}, ${timeAgo(item.deleted_at)}</div>
         </span>
-        <button class="uncov-cover-btn to-cover" data-id="${item.id}">Restaurar</button>
+        <button class="fcamo-restore-btn" data-id="${item.id}">Restaurar</button>
       </div>`;
     }).join('');
   }
   fcamoOverviewBody.innerHTML = html;
   document.getElementById('fcamo-trash-back').addEventListener('click', openFcamoOverview);
-  fcamoOverviewBody.querySelectorAll('[data-id] .uncov-cover-btn, .fcamo-list-item button').forEach(btn => {
+  fcamoOverviewBody.querySelectorAll('[data-id] .fcamo-restore-btn, .fcamo-list-item button').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const id = btn.closest('.fcamo-list-item').dataset.id;
@@ -3079,13 +3122,6 @@ function renderFcamoDetailView(item){
 }
 
 // ---- estaciones sin proveedor: notas compartidas con candado de edicion + historial ----
-const uncoveredOverlay = document.getElementById('uncovered-overlay');
-const uncoveredBody = document.getElementById('uncovered-body');
-const uncoveredBtn = document.getElementById('open-uncovered-panel');
-document.getElementById('btn-close-uncovered').addEventListener('click', () => uncoveredOverlay.classList.remove('open'));
-uncoveredOverlay.addEventListener('click', (e) => { if (e.target === uncoveredOverlay) uncoveredOverlay.classList.remove('open'); });
-uncoveredBtn.addEventListener('click', openUncoveredPanel);
-
 async function notesApi(path, options){
   const token = localStorage.getItem(AUTH_KEY);
   const res = await fetch(`${AUTH_API_URL}/api/notes${path}`, {
@@ -3118,61 +3154,12 @@ function timeAgo(unixSeconds){
 async function refreshUncoveredBadge(){
   try {
     const { items } = await notesApi('', { method: 'GET' });
-    const covered = new Set(items.filter(n => n.covered).map(n => n.station_code));
-    const codes = uncoveredStationCodes().filter(c => !covered.has(c));
-    document.getElementById('uncovered-count').textContent = codes.length;
-    uncoveredBtn.style.display = 'flex';
     window.homeData.notes = items;
     renderHomeStats();
-  } catch (err){ /* se reintentara al abrir el panel */ }
+  } catch (err){ /* se reintentara al volver al inicio */ }
 }
-
-let uncovNotesByCode = {};
-let uncovState = {}; // code -> { editing, lockError, showHistory, historyItems }
-let uncovShowCovered = false;
-
-async function openUncoveredPanel(){
-  uncoveredBody.innerHTML = '<div class="no-data">Cargando…</div>';
-  uncoveredOverlay.classList.add('open');
-  uncovShowCovered = false;
-  try {
-    const [{ items }, fcamoRes] = await Promise.all([
-      notesApi('', { method: 'GET' }),
-      fcamoApi('', { method: 'GET' }).catch(() => ({ items: [] })),
-    ]);
-    uncovNotesByCode = {};
-    items.forEach(n => { uncovNotesByCode[n.station_code] = n; });
-    uncovFcamoByStation = {};
-    fcamoRes.items.forEach(f => {
-      // si hay varios, nos quedamos con el mas reciente pendiente, o si no hay, el mas reciente
-      const cur = uncovFcamoByStation[f.station_code];
-      if (!cur || (cur.status === 'completed' && f.status !== 'completed')) uncovFcamoByStation[f.station_code] = f;
-    });
-    uncovState = {};
-    renderUncoveredPanel();
-  } catch (err){
-    uncoveredBody.innerHTML = `<div class="no-data">No se ha podido conectar con el servidor (${err.message}).</div>`;
-  }
-}
-
-function stateFor(code){
-  if (!uncovState[code]) uncovState[code] = { editing:false, lockError:null, showHistory:false, historyItems:null };
-  return uncovState[code];
-}
-
-const UNCOV_STAGES = [
-  { value:'none',        label:'Sin gestionar' },
-  { value:'contacted',   label:'Proveedor contactado' },
-  { value:'negotiating', label:'En negociación / SGHA en firma' },
-  { value:'interim',     label:'Solución provisional' },
-  { value:'covered',     label:'Cubierta' },
-];
-function uncovStageLabel(v){ return (UNCOV_STAGES.find(s => s.value === v) || UNCOV_STAGES[0]).label; }
-
-let uncovFcamoByStation = {};
 
 async function openFcamoDetailById(id){
-  uncoveredOverlay.classList.remove('open');
   btnNewFcamo.style.display = 'none';
   btnFcamoTrash.style.display = 'none';
   fcamoOverviewBody.innerHTML = '<div class="no-data">Cargando…</div>';
@@ -3185,208 +3172,453 @@ async function openFcamoDetailById(id){
   }
 }
 
-let uncovDetailCode = null;
+// ==== SEGUIMIENTO: INICIO ====
+// Estaciones con vuelo y sin proveedor contratado. Por cada estacion solo importan tres cosas:
+// a quien hemos contactado, a quien hemos elegido y en que situacion esta la estacion.
+// Los proveedores que pueden cubrirla salen de los datos de proveedores no contratados.
 
-function uncovListRowHtml(code){
+const TRK_STAGES = [
+  { v:'none',      label:'Sin gestionar',        hint:'Todavía no hemos contactado con ningún proveedor.' },
+  { v:'searching', label:'En búsqueda',          hint:'Estamos contactando proveedores.' },
+  { v:'selected',  label:'Proveedor elegido',    hint:'Ya hay proveedor elegido; falta cerrar el contrato.' },
+  { v:'interim',   label:'Solución provisional', hint:'Cubierta temporalmente por otra vía.' },
+  { v:'covered',   label:'Cubierta',             hint:'Ya tiene proveedor contratado; sale del seguimiento.' },
+];
+function trkStageLabel(v){ return (TRK_STAGES.find(s => s.v === v) || TRK_STAGES[0]).label; }
+// las fases del sistema anterior (contactado / negociando) cuentan como "en busqueda"
+function trkNormStage(v){
+  if (v === 'contacted' || v === 'negotiating') return 'searching';
+  return TRK_STAGES.some(s => s.v === v) ? v : 'none';
+}
+// estado de un proveedor: pendiente | contactado | elegido (los antiguos offer/negotiating = contactado)
+function trkCandState(status){
+  if (status === 'selected') return 'selected';
+  if (status === 'contacted' || status === 'offer' || status === 'negotiating') return 'contacted';
+  return 'identified';
+}
+function trkCandLabel(status){
+  return ({ selected:'Elegido', contacted:'Contactado', identified:'Pendiente', offer:'Oferta recibida', negotiating:'Negociando', discarded:'Descartado' })[status] || 'Pendiente';
+}
+
+const TRK = {
+  notes:{}, cands:{}, fcamo:{},
+  loaded:false, loading:false, error:null, active:false,
+  filter:'all', q:'',
+  code:null, timer:null,
+};
+
+// ---------- utilidades ----------
+function trkToday(){ const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function trkWho(email){ return String(email || '').split('@')[0]; }
+function trkToast(msg, isErr){
+  let t = document.getElementById('trk-toast');
+  if (!t){ t = document.createElement('div'); t.id = 'trk-toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.className = 'trk-toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+// primer vuelo de la estacion y cuantos dias faltan (para ordenar por urgencia)
+function trkFlight(code){
   const s = STATIONS.find(x => x.code === code);
-  const n = uncovNotesByCode[code] || { note:'', covered:0, stage:'none', candidate_provider:'', updated_by:'', updated_at:null };
-  const stage = n.stage || 'none';
-  const firstFlight = (s && s.schedule && s.schedule.length) ? s.schedule[0][0] : null;
-  const fc = uncovFcamoByStation[code];
-  const subParts = [];
-  if (firstFlight) subParts.push('primer vuelo ' + firstFlight);
-  if (n.updated_by) subParts.push('actualizado ' + timeAgo(n.updated_at));
-  if (fc) subParts.push(fc.status === 'completed' ? 'F-CAMO completado' : 'F-CAMO abierto');
-  return `<div class="fcamo-list-item ${stage === 'covered' ? 'is-covered-row' : ''}" data-code="${code}">
-    <span class="fcamo-list-code">${code}</span>
-    <span class="fcamo-list-meta">
-      <div class="fcamo-list-reason">${s ? s.city + ', ' + s.country : ''}</div>
-      <div class="fcamo-list-sub">${subParts.join(' · ') || 'Sin actividad registrada'}</div>
-    </span>
-    <span class="uncov-stage-pill stage-${stage}">${uncovStageLabel(stage).toUpperCase()}</span>
+  let first = null;
+  if (s && s.schedule){
+    for (const r of s.schedule){
+      const d = parseDateStr(r[0]);
+      if (!isNaN(d) && (!first || d < first)) first = d;
+    }
+  }
+  const t = trkToday();
+  const days = first ? Math.round((first.getTime() - Date.UTC(t.getFullYear(), t.getMonth(), t.getDate())) / 86400000) : null;
+  return {
+    first, days, operating: days !== null && days <= 0,
+    movements: s ? (s.flights || (s.schedule || []).length) : 0,
+    city: s ? s.city : '', country: s ? s.country : '',
+  };
+}
+function trkFlightText(f){
+  if (!f.first) return 'Sin vuelos programados';
+  const d = f.first.toLocaleDateString('es-ES', { day:'numeric', month:'short', timeZone:'UTC' });
+  if (f.days <= 0) return `Ya opera desde el ${d}`;
+  if (f.days === 1) return `Primer vuelo mañana (${d})`;
+  return `Primer vuelo en ${f.days} días (${d})`;
+}
+function trkUrgency(code, stage){
+  if (stage === 'interim' || stage === 'covered') return '';
+  const f = trkFlight(code);
+  if (!f.first) return '';
+  return f.operating ? 'crit' : (f.days <= 14 ? 'high' : '');
+}
+
+function trkNote(code){ return TRK.notes[code] || { station_code:code, stage:'none', note:'', updated_by:'', updated_at:null }; }
+function trkStageOf(code){ return trkNormStage(trkNote(code).stage); }
+
+// proveedores que pueden cubrir la estacion (datos de proveedores no contratados)
+function trkSuggestions(code){
+  const out = [], seen = new Set();
+  const add = p => {
+    const name = String(p.supplier || '').trim();
+    const k = name.toLowerCase();
+    if (!name || seen.has(k)) return;
+    seen.add(k);
+    out.push({ name, easa:p.easa || '', email:p.email || '', phone:p.phone || '' });
+  };
+  const alt = ALT_STATIONS.find(x => x.code === code);
+  if (alt) (alt.providers || []).forEach(add);
+  const s = STATIONS.find(x => x.code === code);
+  if (s) (s.alt_providers || []).forEach(add);
+  return out;
+}
+// une sugerencias + proveedores apuntados a mano; devuelve una fila por proveedor
+function trkProviderRows(code){
+  const stored = TRK.cands[code] || [];
+  const byName = new Map(stored.map(c => [c.provider_name.trim().toLowerCase(), c]));
+  const rows = [];
+  const used = new Set();
+  trkSuggestions(code).forEach(s => {
+    const c = byName.get(s.name.toLowerCase());
+    if (c) used.add(c.id);
+    rows.push({ name:s.name, easa:s.easa, email:s.email, phone:s.phone, cand:c || null, manual:false });
+  });
+  stored.forEach(c => { if (!used.has(c.id)) rows.push({ name:c.provider_name, easa:'', email:'', phone:'', cand:c, manual:true }); });
+  const rank = r => { const st = r.cand ? trkCandState(r.cand.status) : 'identified'; return st === 'selected' ? 0 : st === 'contacted' ? 1 : 2; };
+  return rows.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'es'));
+}
+function trkSummary(code){
+  const st = (TRK.cands[code] || []).map(c => ({ name:c.provider_name, state:trkCandState(c.status) }));
+  return {
+    chosen: st.find(c => c.state === 'selected') || null,
+    contacted: st.filter(c => c.state !== 'identified'),
+  };
+}
+
+function trkItems(){
+  return uncoveredStationCodes().map(code => ({
+    code, stage:trkStageOf(code), note:trkNote(code), flight:trkFlight(code), sum:trkSummary(code),
+  }));
+}
+function trkCounts(){
+  const c = { all:0, none:0, searching:0, selected:0, interim:0, covered:0 };
+  trkItems().forEach(it => { c[it.stage]++; if (it.stage !== 'covered') c.all++; });
+  return c;
+}
+function trkVisibleItems(){
+  let items = trkItems();
+  const f = TRK.filter;
+  items = f === 'all' ? items.filter(i => i.stage !== 'covered') : items.filter(i => i.stage === f);
+  const q = TRK.q.trim().toLowerCase();
+  if (q){
+    items = items.filter(i => [i.code, i.flight.city, i.flight.country, ...i.sum.contacted.map(c => c.name)].join(' ').toLowerCase().includes(q));
+  }
+  // los que ya operan primero (mas movimientos antes); despues, por fecha de primer vuelo
+  return items.sort((a, b) => {
+    if (a.flight.operating !== b.flight.operating) return a.flight.operating ? -1 : 1;
+    if (a.flight.operating) return b.flight.movements - a.flight.movements;
+    return (a.flight.first ? a.flight.first.getTime() : Infinity) - (b.flight.first ? b.flight.first.getTime() : Infinity);
+  });
+}
+
+async function trkApi(path, options){
+  const token = localStorage.getItem(AUTH_KEY);
+  const res = await fetch(`${AUTH_API_URL}/api/tracking${path}`, {
+    ...options,
+    headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}`, ...(options && options.headers) },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok){ const e = new Error(data.error || 'Error de conexión'); e.status = res.status; throw e; }
+  return data;
+}
+
+// ---------- carga ----------
+function trkSyncHome(){
+  window.homeData.notes = Object.values(TRK.notes);
+  if (typeof renderHomeStats === 'function') renderHomeStats();
+}
+async function trkLoad(){
+  if (TRK.loading) return;
+  TRK.loading = true;
+  try {
+    const [data, fc] = await Promise.all([
+      trkApi('', { method:'GET' }),
+      fcamoApi('', { method:'GET' }).catch(() => ({ items:[] })),
+    ]);
+    TRK.notes = {}; data.notes.forEach(n => { TRK.notes[n.station_code] = n; });
+    TRK.cands = {}; data.candidates.forEach(c => { (TRK.cands[c.station_code] = TRK.cands[c.station_code] || []).push(c); });
+    TRK.fcamo = {};
+    fc.items.forEach(f => {
+      const cur = TRK.fcamo[f.station_code];
+      if (!cur || (cur.status === 'completed' && f.status !== 'completed')) TRK.fcamo[f.station_code] = f;
+    });
+    TRK.loaded = true; TRK.error = null;
+    trkSyncHome();
+  } catch (err){
+    if (err.status !== 401) TRK.error = err.message;
+  }
+  TRK.loading = false;
+  if (TRK.active && !TRK.code) trkRender();
+  else if (TRK.active && TRK.code) trkRenderDetail();
+}
+
+// ---------- lista de estaciones ----------
+function trkPill(stage){ return `<span class="trk-pill trk-st-${stage}">${escHtml(trkStageLabel(stage))}</span>`; }
+
+function trkRowHtml(it){
+  const urg = trkUrgency(it.code, it.stage);
+  const contacted = it.sum.contacted.length;
+  return `<div class="trk-row ${urg ? 'u-' + urg : ''}" data-act="open" data-code="${it.code}" role="button" tabindex="0">
+    <span class="trk-code">${it.code}</span>
+    <div class="trk-row-main">
+      <div class="trk-city">${escHtml(it.flight.city)}${it.flight.country ? ', ' + escHtml(it.flight.country) : ''}</div>
+      <div class="trk-flight ${urg}">${escHtml(trkFlightText(it.flight))}</div>
+    </div>
+    <div class="trk-row-prov">
+      <div><span class="trk-k">Contactados</span> ${contacted ? `<b>${contacted}</b>` : '<span class="trk-none">ninguno</span>'}</div>
+      <div><span class="trk-k">Elegido</span> ${it.sum.chosen ? `<b>${escHtml(it.sum.chosen.name)}</b>` : '<span class="trk-none">sin elegir</span>'}</div>
+    </div>
+    ${trkPill(it.stage)}
   </div>`;
 }
 
-function renderUncoveredPanel(){
-  uncovDetailCode = null;
-  const codes = uncoveredStationCodes();
-  if (!codes.length){
-    uncoveredBody.innerHTML = '<div class="no-data">No hay estaciones con vuelo y sin proveedor ahora mismo.</div>';
-    document.getElementById('uncovered-count').textContent = '0';
+function trkRender(){
+  const content = document.getElementById('trk-content');
+  if (!content) return;
+  const head = document.getElementById('trk-list-head');
+  if (TRK.code){
+    head.style.display = 'none';
+    content.innerHTML = trkDetailHtml(TRK.code);
     return;
   }
-  const isCovered = c => !!(uncovNotesByCode[c] && uncovNotesByCode[c].covered);
-  const notCovered = codes.filter(c => !isCovered(c)).length;
-  const coveredCount = codes.length - notCovered;
-  document.getElementById('uncovered-count').textContent = notCovered;
+  head.style.display = '';
+  const c = trkCounts();
+  const chip = (f, label, n) => `<button type="button" class="trk-chip ${TRK.filter === f ? 'on' : ''}" data-act="filter" data-filter="${f}">${label} <b>${n}</b></button>`;
+  document.getElementById('trk-chips').innerHTML = chip('all', 'Todas', c.all) + chip('none', 'Sin gestionar', c.none) + chip('searching', 'En búsqueda', c.searching)
+    + chip('selected', 'Proveedor elegido', c.selected) + chip('interim', 'Provisional', c.interim) + chip('covered', 'Cubiertas', c.covered);
 
-  const visibleCodes = uncovShowCovered ? codes : codes.filter(c => !isCovered(c));
-
-  let html = '';
-  if (coveredCount > 0){
-    html += `<button type="button" class="ov-see-all" id="uncov-toggle-covered" style="margin-bottom:14px;">
-      ${uncovShowCovered ? 'Ocultar cubiertas' : `Ver cubiertas (${coveredCount})`}
-    </button>`;
+  if (!TRK.loaded){
+    content.innerHTML = TRK.error
+      ? `<div class="trk-empty">No se ha podido cargar el seguimiento (${escHtml(TRK.error)}). <button type="button" class="trk-link" data-act="retry">Reintentar</button></div>`
+      : '<div class="trk-empty">Cargando…</div>';
+    return;
   }
-  html += visibleCodes.length
-    ? visibleCodes.map(uncovListRowHtml).join('')
-    : '<div class="no-data">No hay estaciones pendientes ahora mismo.</div>';
-
-  uncoveredBody.innerHTML = html;
-
-  const toggleBtn = document.getElementById('uncov-toggle-covered');
-  if (toggleBtn) toggleBtn.addEventListener('click', () => { uncovShowCovered = !uncovShowCovered; renderUncoveredPanel(); });
-
-  uncoveredBody.querySelectorAll('.fcamo-list-item').forEach(el => {
-    el.addEventListener('click', () => openUncoveredDetail(el.dataset.code));
-  });
+  if (!uncoveredStationCodes().length){
+    content.innerHTML = '<div class="trk-empty">No hay estaciones con vuelo y sin proveedor ahora mismo.</div>';
+    return;
+  }
+  const items = trkVisibleItems();
+  content.innerHTML = items.length
+    ? '<div class="trk-list">' + items.map(trkRowHtml).join('') + '</div>'
+    : '<div class="trk-empty">Ninguna estación coincide.</div>';
 }
 
-function openUncoveredDetail(code){
-  uncovDetailCode = code;
-  renderUncoveredDetailView(code);
+// ---------- estacion ----------
+function trkProviderHtml(r){
+  const state = r.cand ? trkCandState(r.cand.status) : 'identified';
+  const chosen = state === 'selected';
+  const contact = [r.email, r.phone].filter(Boolean).map(escHtml).join(' · ');
+  const key = escHtml(r.name);
+  return `<div class="trk-prov ${chosen ? 'is-chosen' : ''}">
+    <div class="trk-prov-main">
+      <div class="trk-prov-name">${escHtml(r.name)}${r.easa ? `<span class="trk-easa">EASA ${escHtml(r.easa)}</span>` : ''}${chosen ? '<span class="trk-tag">ELEGIDO</span>' : ''}</div>
+      ${contact ? `<div class="trk-prov-contact">${contact}</div>` : (r.manual ? '<div class="trk-prov-contact">Añadido a mano</div>' : '')}
+    </div>
+    <label class="trk-contacted ${chosen ? 'is-locked' : ''}">
+      <input type="checkbox" data-act="contacted" data-name="${key}" ${state !== 'identified' ? 'checked' : ''} ${chosen ? 'disabled' : ''}>
+      Contactado
+    </label>
+    ${chosen
+      ? `<button type="button" class="trk-btn" data-act="unchoose" data-name="${key}">Quitar elección</button>`
+      : `<button type="button" class="trk-btn choose" data-act="choose" data-name="${key}">Elegir</button>`}
+    ${r.manual && r.cand ? `<button type="button" class="trk-x" data-act="remove" data-name="${key}" title="Quitar de la lista" aria-label="Quitar ${key} de la lista">✕</button>` : ''}
+  </div>`;
 }
 
-function uncovDetailBodyHtml(code){
-  const n = uncovNotesByCode[code] || { note:'', covered:0, stage:'none', candidate_provider:'', updated_by:'', updated_at:null };
-  const st = stateFor(code);
-  if (st.editing){
-    return `
-      <div class="uncov-field-label">Proveedor candidato</div>
-      <input type="text" class="uncov-input" id="uncov-cp-${code}" placeholder="Ej: Flying Spanner Ltd." value="${(n.candidate_provider || '').replace(/"/g,'&quot;')}">
-      <div class="uncov-field-label" style="margin-top:10px;">Nota</div>
-      <textarea class="uncov-textarea" id="uncov-ta-${code}" placeholder="Ej: proveedor contactado, a la espera de firmar SGHA…">${n.note || ''}</textarea>
-      <div class="uncov-edit-actions">
-        <button class="uncov-cover-btn to-cover" data-act="save" data-code="${code}">Guardar</button>
-        <button class="uncov-cover-btn to-uncover" data-act="cancel" data-code="${code}">Cancelar</button>
-      </div>`;
-  }
+function trkDetailHtml(code){
+  const note = trkNote(code), stage = trkStageOf(code);
+  const f = trkFlight(code);
+  const sum = trkSummary(code);
+  const rows = trkProviderRows(code);
+  const fc = TRK.fcamo[code];
+  const def = TRK_STAGES.find(s => s.v === stage);
+  const contactedNames = sum.contacted.map(c => escHtml(c.name)).join(', ');
+
   return `
-    ${n.candidate_provider ? `<div class="uncov-candidate"><b>Proveedor candidato:</b> ${n.candidate_provider.replace(/</g,'&lt;')}</div>` : ''}
-    <div class="uncov-note-text">${n.note ? n.note.replace(/</g,'&lt;') : '<span class="uncov-empty">Sin notas todavía.</span>'}</div>
-    <div class="uncov-meta">
-      ${n.updated_by ? `Última actualización de <b>${n.updated_by}</b>, ${timeAgo(n.updated_at)}` : 'Sin actividad registrada'}
-      <button class="uncov-history-link" data-act="history" data-code="${code}">${st.showHistory ? 'Ocultar historial' : 'Ver historial'}</button>
+  <button type="button" class="trk-back" data-act="back">← Todas las estaciones</button>
+  <div class="trk-dhead">
+    <span class="trk-code big">${code}</span>
+    <div>
+      <div class="trk-dcity">${escHtml(f.city)}${f.country ? ', ' + escHtml(f.country) : ''}</div>
+      <div class="trk-flight ${trkUrgency(code, stage)}">${escHtml(trkFlightText(f))}${f.movements ? ` · ${f.movements.toLocaleString('es-ES')} movimientos` : ''}</div>
     </div>
-    ${st.lockError ? `<div class="uncov-locked-msg">🔒 ${st.lockError} lo está editando ahora mismo. Inténtalo en unos minutos.</div>` : ''}
-    <div class="uncov-edit-actions">
-      <button class="uncov-edit-btn" data-act="edit" data-code="${code}">Editar</button>
-    </div>`;
-}
+  </div>
 
-function uncovDetailHistoryHtml(code){
-  const st = stateFor(code);
-  if (!st.showHistory) return '';
-  if (!st.historyItems) return '<div class="uncov-history-panel"><div class="no-data">Cargando historial…</div></div>';
-  if (!st.historyItems.length) return '<div class="uncov-history-panel"><div class="no-data">Sin cambios registrados todavía.</div></div>';
-  return '<div class="uncov-history-panel">' + st.historyItems.map(h => {
-    let desc;
-    if (h.action === 'covered') desc = h.value === 'true' ? 'la marcó como cubierta' : 'la marcó como pendiente';
-    else if (h.action === 'stage') desc = `cambió la fase a "${uncovStageLabel(h.value)}"`;
-    else if (h.action === 'candidate_provider') desc = h.value ? `puso como proveedor candidato: "${h.value.replace(/</g,'&lt;')}"` : 'quitó el proveedor candidato';
-    else desc = `escribió: "${h.value.replace(/</g,'&lt;')}"`;
-    return `<div class="uncov-history-item"><b>${h.changed_by}</b> ${desc} <span class="uncov-history-time">· ${timeAgo(h.changed_at)}</span></div>`;
-  }).join('') + '</div>';
-}
+  <div class="trk-summary">
+    <div><span class="trk-k">Estado</span>${trkPill(stage)}</div>
+    <div><span class="trk-k">Contactados</span><b>${contactedNames || '<span class="trk-none">ninguno todavía</span>'}</b></div>
+    <div><span class="trk-k">Elegido</span><b>${sum.chosen ? escHtml(sum.chosen.name) : '<span class="trk-none">ninguno todavía</span>'}</b></div>
+  </div>
 
-function renderUncoveredDetailView(code){
-  const s = STATIONS.find(x => x.code === code);
-  const n = uncovNotesByCode[code] || { stage:'none' };
-  const stage = n.stage || 'none';
-  const firstFlight = (s && s.schedule && s.schedule.length) ? s.schedule[0][0] : null;
-  const fc = uncovFcamoByStation[code];
-
-  uncoveredBody.innerHTML = `
-    <button class="fcamo-back" id="uncov-detail-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Todas las estaciones</button>
-    <div class="fcamo-detail-head">
-      <div>
-        <div class="fcamo-detail-title"><span class="fcamo-list-code">${code}</span> ${s ? s.city + ', ' + s.country : ''}</div>
-        <div class="fcamo-detail-sub">${firstFlight ? 'Primer vuelo ' + firstFlight : 'Sin vuelo detectado en el horario cargado'}</div>
-      </div>
-      <select class="uncov-stage-select stage-${stage}" data-act="stage" data-code="${code}">
-        ${UNCOV_STAGES.map(opt => `<option value="${opt.value}" ${stage === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
-      </select>
+  <section class="trk-sec">
+    <h3>Estado de la estación</h3>
+    <div class="trk-seg-ctl" role="group" aria-label="Estado de la estación">
+      ${TRK_STAGES.map(s => `<button type="button" class="trk-st-${s.v} ${s.v === stage ? 'on' : ''}" data-act="stage" data-v="${s.v}">${escHtml(s.label)}</button>`).join('')}
     </div>
-    ${fc ? `<button class="uncov-fcamo-link" data-act="open-fcamo" data-id="${fc.id}">📋 F-CAMO ${fc.status === 'completed' ? 'completado' : 'abierto'} para esta estación (${fcamoProgress(fc).done}/${fcamoProgress(fc).total}) →</button>` : ''}
-    <div id="uncov-detail-body" style="margin-top:14px;">${uncovDetailBodyHtml(code)}</div>
-    <div id="uncov-detail-history">${uncovDetailHistoryHtml(code)}</div>
-  `;
-  wireUncoveredDetailEvents(code);
+    <p class="trk-hint">${escHtml(def.hint)} <span>Cambia solo al marcar contactados o elegir; «Provisional» y «Cubierta» las marcas tú.</span></p>
+  </section>
+
+  <section class="trk-sec">
+    <h3>Proveedores que pueden cubrirla <span class="trk-count">${rows.length}</span></h3>
+    ${rows.length ? rows.map(trkProviderHtml).join('') : '<div class="trk-empty small">No hay proveedores registrados para esta estación. Añade abajo el que estéis contactando.</div>'}
+    <div class="trk-add">
+      <input type="text" id="trk-add-name" data-keep placeholder="Añadir otro proveedor…" maxlength="120" autocomplete="off">
+      <button type="button" class="trk-btn primary" data-act="add">Añadir</button>
+    </div>
+  </section>
+
+  <section class="trk-sec">
+    <h3>Notas</h3>
+    <textarea id="trk-note" data-keep rows="4" maxlength="2000" placeholder="Cualquier cosa que convenga recordar de esta estación…">${escHtml(note.note || '')}</textarea>
+    <div class="trk-btnrow"><button type="button" class="trk-btn primary" data-act="save-note">Guardar notas</button>
+      <span class="trk-updated">${note.updated_at ? `Última actualización ${timeAgo(note.updated_at)} · ${escHtml(trkWho(note.updated_by))}` : ''}</span></div>
+  </section>
+
+  ${fc ? `<section class="trk-sec"><h3>F-CAMO-IBE-14</h3>
+    <button type="button" class="trk-fcamo" data-act="fcamo-open" data-id="${fc.id}">📋 ${fc.status === 'completed' ? 'Completado' : 'Abierto'} para esta estación (${fcamoProgress(fc).done}/${fcamoProgress(fc).total}) →</button></section>` : ''}`;
 }
 
-function wireUncoveredDetailEvents(code){
-  document.getElementById('uncov-detail-back').addEventListener('click', () => { renderUncoveredPanel(); });
+function trkRenderDetail(){
+  const content = document.getElementById('trk-content');
+  if (!content || !TRK.code) return;
+  const keep = [...content.querySelectorAll('[data-keep]')].map(n => ({ id:n.id, v:n.value, f:n === document.activeElement }));
+  const view = document.getElementById('tracking-view');
+  const scroll = view.scrollTop;
+  content.innerHTML = trkDetailHtml(TRK.code);
+  keep.forEach(k => { const n = document.getElementById(k.id); if (n){ n.value = k.v; if (k.f) n.focus(); } });
+  view.scrollTop = scroll;
+}
 
-  const stageSel = uncoveredBody.querySelector('[data-act="stage"]');
-  if (stageSel) stageSel.addEventListener('change', async () => {
-    try {
-      const { item } = await notesApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ stage: stageSel.value }) });
-      uncovNotesByCode[code] = item;
-      renderUncoveredDetailView(code);
-    } catch (err){
-      alert('No se ha podido guardar: ' + err.message);
-      renderUncoveredDetailView(code);
+// ---------- navegacion (la URL guarda la estacion: #seguimiento/ABC) ----------
+function trkOpen(code){ location.hash = '#seguimiento/' + code; }
+function trkClose(){ location.hash = '#seguimiento'; }
+
+function trkEnter(code){
+  if (!TRK.active){
+    TRK.active = true;
+    trkLoad();
+    TRK.timer = setInterval(() => { if (TRK.active && !TRK.code && !document.hidden) trkLoad(); }, 60000);
+  }
+  if (code && !STATIONS.some(s => s.code === code)){
+    trkToast('Esa estación no existe', true);
+    history.replaceState(null, '', '#seguimiento');
+    code = null;
+  }
+  TRK.code = code || null;
+  document.getElementById('tracking-view').scrollTop = 0;
+  trkRender();
+}
+function trkLeave(){
+  TRK.active = false;
+  TRK.code = null;
+  clearInterval(TRK.timer); TRK.timer = null;
+}
+
+// aplica un cambio en el servidor y repinta
+function trkApply(code, snap){
+  if (snap.note) TRK.notes[code] = snap.note;
+  if (snap.candidates) TRK.cands[code] = snap.candidates;
+  trkSyncHome();
+}
+async function trkMutate(code, fn, okMsg){
+  try {
+    const snap = await fn();
+    trkApply(code, snap);
+    if (okMsg) trkToast(okMsg);
+    if (TRK.code === code) trkRenderDetail(); else if (TRK.active) trkRender();
+    return snap;
+  } catch (err){
+    if (err.status !== 401) trkToast(err.message, true);
+    if (TRK.code === code) trkRenderDetail();
+    return null;
+  }
+}
+const trkCandOf = (code, name) => (TRK.cands[code] || []).find(c => c.provider_name.trim().toLowerCase() === name.trim().toLowerCase());
+// pone a un proveedor en un estado, creandolo si todavia no estaba apuntado
+function trkSetProvider(code, name, status){
+  const cand = trkCandOf(code, name);
+  return trkMutate(code, async () => {
+    const snap = cand
+      ? await trkApi(`/candidates/${cand.id}`, { method:'PATCH', body: JSON.stringify({ status }) })
+      : await trkApi(`/${code}/candidates`, { method:'POST', body: JSON.stringify({ provider_name:name, status }) });
+    if (status === 'selected'){
+      trkToast(snap.replaced && snap.replaced.length ? `${name} elegido (sustituye a ${snap.replaced.join(', ')})` : `${name} elegido`);
     }
+    return snap;
+  });
+}
+
+// ---------- eventos ----------
+(function trkWire(){
+  const root = document.getElementById('tracking-view');
+  if (!root) return;
+
+  document.getElementById('trk-back-home').addEventListener('click', () => goHome());
+  document.getElementById('trk-search').addEventListener('input', e => { TRK.q = e.target.value; trkRender(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && TRK.active && TRK.code && !document.querySelector('.modal-overlay.open')) trkClose();
   });
 
-  const fcamoLink = uncoveredBody.querySelector('[data-act="open-fcamo"]');
-  if (fcamoLink) fcamoLink.addEventListener('click', () => openFcamoDetailById(parseInt(fcamoLink.dataset.id, 10)));
+  root.addEventListener('click', e => {
+    const el = e.target.closest('[data-act]');
+    if (!el || el.tagName === 'INPUT') return;
+    const act = el.dataset.act, code = TRK.code;
+    if (act === 'filter'){ TRK.filter = (TRK.filter === el.dataset.filter) ? 'all' : el.dataset.filter; trkRender(); return; }
+    if (act === 'retry'){ trkLoad(); return; }
+    if (act === 'open'){ trkOpen(el.dataset.code); return; }
+    if (act === 'back'){ trkClose(); return; }
+    if (act === 'fcamo-open'){ openFcamoDetailById(parseInt(el.dataset.id, 10)); return; }
+    if (!code) return;
 
-  const editBtn = uncoveredBody.querySelector('[data-act="edit"]');
-  if (editBtn) editBtn.addEventListener('click', async () => {
-    try {
-      const { item } = await notesApi(`/${code}/lock`, { method:'POST' });
-      uncovNotesByCode[code] = item;
-      stateFor(code).editing = true;
-      stateFor(code).lockError = null;
-      renderUncoveredDetailView(code);
-      const ta = document.getElementById(`uncov-ta-${code}`);
-      if (ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
-    } catch (err){
-      stateFor(code).lockError = err.locked_by || 'Otra persona';
-      renderUncoveredDetailView(code);
-    }
-  });
-
-  const cancelBtn = uncoveredBody.querySelector('[data-act="cancel"]');
-  if (cancelBtn) cancelBtn.addEventListener('click', async () => {
-    try { await notesApi(`/${code}/unlock`, { method:'POST' }); } catch (err){}
-    stateFor(code).editing = false;
-    renderUncoveredDetailView(code);
-  });
-
-  const saveBtn = uncoveredBody.querySelector('[data-act="save"]');
-  if (saveBtn) saveBtn.addEventListener('click', async () => {
-    const ta = document.getElementById(`uncov-ta-${code}`);
-    const cp = document.getElementById(`uncov-cp-${code}`);
-    try {
-      const { item } = await notesApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ note: ta.value, candidate_provider: cp.value }) });
-      uncovNotesByCode[code] = item;
-      stateFor(code).editing = false;
-      stateFor(code).showHistory = false;
-      stateFor(code).historyItems = null;
-      renderUncoveredDetailView(code);
-    } catch (err){
-      alert('No se ha podido guardar: ' + err.message);
-    }
-  });
-
-  const histBtn = uncoveredBody.querySelector('[data-act="history"]');
-  if (histBtn) histBtn.addEventListener('click', async () => {
-    const st = stateFor(code);
-    st.showHistory = !st.showHistory;
-    if (st.showHistory && !st.historyItems){
-      renderUncoveredDetailView(code);
-      try {
-        const { items } = await notesApi(`/${code}/history`, { method:'GET' });
-        st.historyItems = items;
-      } catch (err){
-        st.historyItems = [];
+    if (act === 'stage'){
+      const v = el.dataset.v;
+      if (v === trkStageOf(code)) return;
+      if (v === 'covered' && !confirm(`¿Marcar ${code} como cubierta? Saldrá de la lista (podrás verla en el filtro «Cubiertas»).`)) return;
+      trkMutate(code, () => trkApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ stage:v }) }));
+    } else if (act === 'choose'){
+      trkSetProvider(code, el.dataset.name, 'selected');
+    } else if (act === 'unchoose'){
+      trkSetProvider(code, el.dataset.name, 'contacted');
+    } else if (act === 'remove'){
+      const c = trkCandOf(code, el.dataset.name);
+      if (!c || !confirm(`¿Quitar a ${c.provider_name} de la lista de ${code}?`)) return;
+      trkMutate(code, () => trkApi(`/candidates/${c.id}`, { method:'DELETE' }), 'Proveedor quitado');
+    } else if (act === 'add'){
+      const input = document.getElementById('trk-add-name');
+      const name = input.value.trim();
+      if (!name){ trkToast('Escribe el nombre del proveedor', true); input.focus(); return; }
+      if (trkCandOf(code, name) || trkSuggestions(code).some(s => s.name.toLowerCase() === name.toLowerCase())){
+        trkToast('Ese proveedor ya está en la lista', true); return;
       }
+      trkMutate(code, () => trkApi(`/${code}/candidates`, { method:'POST', body: JSON.stringify({ provider_name:name }) }), 'Proveedor añadido')
+        .then(snap => { if (snap){ const n = document.getElementById('trk-add-name'); if (n) n.value = ''; } });
+    } else if (act === 'save-note'){
+      const text = document.getElementById('trk-note').value;
+      trkMutate(code, () => trkApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ note:text }) }), 'Notas guardadas');
     }
-    renderUncoveredDetailView(code);
   });
-}
+
+  root.addEventListener('change', e => {
+    const el = e.target.closest('input[data-act="contacted"]');
+    if (!el || !TRK.code) return;
+    trkSetProvider(TRK.code, el.dataset.name, el.checked ? 'contacted' : 'identified');
+  });
+
+  root.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.matches('[data-act="open"]')){ e.preventDefault(); trkOpen(e.target.dataset.code); }
+    else if (e.key === 'Enter' && e.target.id === 'trk-add-name'){ e.preventDefault(); root.querySelector('[data-act="add"]').click(); }
+  });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && TRK.active && !TRK.code) trkLoad(); });
+})();
+// ==== SEGUIMIENTO: FIN ====
 
 // ---- actividad reciente: notas + F-CAMO combinados ----
 const activityOverlay = document.getElementById('activity-overlay');
@@ -3403,8 +3635,21 @@ function activityText(entry){
     if (entry.action === 'covered'){
       return `<b>${entry.changed_by}</b> marcó <b>${entry.station_code}</b> como ${entry.value === 'true' ? 'cubierta' : 'pendiente'}`;
     }
-    const preview = entry.value.length > 90 ? entry.value.slice(0, 90) + '…' : entry.value;
-    return `<b>${entry.changed_by}</b> escribió una nota en <b>${entry.station_code}</b>: "${preview.replace(/</g,'&lt;')}"`;
+    const who = `<b>${escHtml(entry.changed_by)}</b>`, st = `<b>${escHtml(entry.station_code)}</b>`;
+    const val = String(entry.value || '');
+    const cut = (t, n) => escHtml(t.length > n ? t.slice(0, n) + '…' : t);
+    const split = v => { const k = v.lastIndexOf('|'); return k < 0 ? [v, ''] : [v.slice(0, k), v.slice(k + 1)]; };
+    switch (entry.action){
+      case 'stage': return `${who} cambió la situación de ${st} a <b>${escHtml(trkStageLabel(trkNormStage(val)))}</b>`;
+      case 'log': return `${who} añadió a la bitácora de ${st}: "${cut(val, 90)}"`;
+      case 'cand_add': return `${who} añadió a <b>${escHtml(val)}</b> como proveedor candidato en ${st}`;
+      case 'cand_status': { const [n, s] = split(val); return `${who} movió a <b>${escHtml(n)}</b> a «${escHtml(trkCandLabel(s))}» en ${st}`; }
+      case 'cand_edit': return `${who} editó los datos de <b>${escHtml(val)}</b> en ${st}`;
+      case 'cand_remove': return `${who} quitó a <b>${escHtml(val)}</b> de la lista de ${st}`;
+      case 'next_action': return `${who} actualizó la próxima acción de ${st}`;
+      case 'candidate_provider': return `${who} ${val ? 'propuso como candidato a <b>' + escHtml(val) + '</b> en' : 'quitó el proveedor candidato de'} ${st}`;
+    }
+    return `${who} escribió una nota en ${st}: "${cut(val, 90)}"`;
   }
   const labels = { created:'abrió un F-CAMO-IBE-14 para', completed:'completó el checklist de', reopened:'reabrió el checklist de', deleted:'eliminó el F-CAMO-IBE-14 de', restored:'restauró el F-CAMO-IBE-14 de' };
   return `<b>${entry.changed_by}</b> ${labels[entry.action] || entry.action} <b>${entry.station_code}</b>`;
@@ -3633,9 +3878,13 @@ function renderHomeStats(){
     const byCode = {};
     hd.notes.forEach(n => { byCode[n.station_code] = n; });
     const pend = uncoveredStationCodes().filter(c => !(byCode[c] && byCode[c].covered));
-    const cnt = { none:0, contacted:0, negotiating:0, interim:0 };
-    pend.forEach(c => { const st = (byCode[c] && byCode[c].stage) || 'none'; if (st in cnt) cnt[st]++; });
-    const labels = { none:'sin gestionar', contacted:'contactadas', negotiating:'negociando', interim:'provisional' };
+    const cnt = { none:0, searching:0, selected:0, interim:0 };
+    pend.forEach(c => {
+      const n = byCode[c];
+      const st = trkNormStage(n && n.stage);
+      if (st in cnt) cnt[st]++;
+    });
+    const labels = { none:'sin gestionar', searching:'en búsqueda', selected:'con proveedor elegido', interim:'provisional' };
     const parts = Object.keys(cnt).filter(k => cnt[k] > 0).map(k => `${cnt[k]} ${labels[k]}`);
     set('home-c-uncov', pend.length);
     set('home-s-uncov', pend.length ? parts.join(' · ') : 'Todas las estaciones cubiertas');
