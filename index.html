@@ -151,6 +151,8 @@
     text-decoration:underline;
   }
   .login-link:hover{color:var(--ink);}
+  .login-note{font-size:12px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.5;}
+  .pw-btn{margin-left:auto;}
   .login-btn{
     width:100%;
     background:var(--red);
@@ -779,6 +781,7 @@
     .login-brand-text .t2{display:none;}
     .login-brand-text .t1{font-size:14px;}
     .logout-btn{padding:6px 9px;font-size:11px;}
+    .pw-btn{padding:6px 8px;}
     .filter-row{flex-direction:column;}
     .mode-toggle button{font-size:11px;padding:11px 4px;}
     .modal-overlay{padding:10px;}
@@ -1283,7 +1286,7 @@
   </div>
   <div class="login-center">
   <div class="login-card">
-    <div class="login-title">Iniciar sesión</div>
+    <div class="login-title" id="login-title">Iniciar sesión</div>
     <form id="login-form">
       <div class="login-error" id="login-error">Usuario o contraseña incorrectos.</div>
       <div class="login-field">
@@ -1295,19 +1298,26 @@
         <input type="password" id="login-pass" autocomplete="current-password" required>
       </div>
       <button type="submit" class="login-btn">Entrar</button>
-      <button type="button" class="login-link" id="show-forgot">¿Has olvidado tu contraseña?</button>
+      <div class="login-note">¿Has olvidado tu contraseña? Pide a un administrador que te la restablezca.</div>
     </form>
 
-    <form id="forgot-form" style="display:none;">
-      <div class="login-sub" style="margin-bottom:18px;">Te enviaremos un enlace para elegir una nueva contraseña.</div>
-      <div class="login-error" id="forgot-error"></div>
-      <div class="login-ok" id="forgot-ok">Si ese usuario existe, te hemos enviado un correo con el enlace.</div>
-      <div class="login-field">
-        <label for="forgot-email">Usuario</label>
-        <input type="email" id="forgot-email" autocomplete="username" placeholder="nombre@iberia.es" required>
+    <form id="change-form" style="display:none;">
+      <div class="login-sub" id="change-sub" style="margin-bottom:18px;"></div>
+      <div class="login-error" id="change-error"></div>
+      <div class="login-field" id="change-current-wrap">
+        <label for="change-current">Contraseña actual</label>
+        <input type="password" id="change-current" autocomplete="current-password">
       </div>
-      <button type="submit" class="login-btn">Enviar enlace</button>
-      <button type="button" class="login-link" id="show-login-from-forgot">Volver a iniciar sesión</button>
+      <div class="login-field">
+        <label for="change-pass1">Contraseña nueva (mínimo 10 caracteres)</label>
+        <input type="password" id="change-pass1" autocomplete="new-password" required minlength="10" maxlength="200">
+      </div>
+      <div class="login-field">
+        <label for="change-pass2">Repite la contraseña nueva</label>
+        <input type="password" id="change-pass2" autocomplete="new-password" required minlength="10" maxlength="200">
+      </div>
+      <button type="submit" class="login-btn">Guardar contraseña</button>
+      <button type="button" class="login-link" id="change-cancel">Cancelar</button>
     </form>
 
     <form id="reset-form" style="display:none;">
@@ -1315,11 +1325,11 @@
       <div class="login-error" id="reset-error"></div>
       <div class="login-field">
         <label for="reset-pass1">Nueva contraseña</label>
-        <input type="password" id="reset-pass1" autocomplete="new-password" required minlength="8">
+        <input type="password" id="reset-pass1" autocomplete="new-password" required minlength="10" maxlength="200">
       </div>
       <div class="login-field">
         <label for="reset-pass2">Repite la contraseña</label>
-        <input type="password" id="reset-pass2" autocomplete="new-password" required minlength="8">
+        <input type="password" id="reset-pass2" autocomplete="new-password" required minlength="10" maxlength="200">
       </div>
       <button type="submit" class="login-btn">Guardar contraseña</button>
     </form>
@@ -1351,6 +1361,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
       Actualizado 17 sep
     </span>
+    <button class="logout-btn" id="change-pass-btn" title="Cambiar mi contraseña">Contraseña</button>
     <button class="logout-btn" id="logout-btn">Cerrar sesión</button>
   </header>
 
@@ -1698,12 +1709,18 @@ const loginError = document.getElementById('login-error');
 const appEl = document.querySelector('.app');
 const logoutBtn = document.getElementById('logout-btn');
 
-const forgotForm = document.getElementById('forgot-form');
-const forgotEmail = document.getElementById('forgot-email');
-const forgotError = document.getElementById('forgot-error');
-const forgotOk = document.getElementById('forgot-ok');
-const showForgotBtn = document.getElementById('show-forgot');
-const showLoginFromForgotBtn = document.getElementById('show-login-from-forgot');
+// cambio de contraseña: obligatorio tras una temporal (forced) o voluntario desde la cabecera
+const changeForm = document.getElementById('change-form');
+const changeCurrent = document.getElementById('change-current');
+const changeCurrentWrap = document.getElementById('change-current-wrap');
+const changePass1 = document.getElementById('change-pass1');
+const changePass2 = document.getElementById('change-pass2');
+const changeError = document.getElementById('change-error');
+const changeSub = document.getElementById('change-sub');
+const changeCancelBtn = document.getElementById('change-cancel');
+const loginTitleEl = document.getElementById('login-title');
+const PASSWORD_MIN = 10;
+let pwChange = null; // { forced, token, current } mientras el formulario de cambio esta abierto
 
 const resetForm = document.getElementById('reset-form');
 const resetPass1 = document.getElementById('reset-pass1');
@@ -1774,9 +1791,11 @@ document.getElementById('home-t-alt').addEventListener('click', () => { goMap();
 });
 function showLoginView(view){
   loginForm.style.display = view === 'login' ? '' : 'none';
-  forgotForm.style.display = view === 'forgot' ? '' : 'none';
+  changeForm.style.display = view === 'change' ? '' : 'none';
   resetForm.style.display = view === 'reset' ? '' : 'none';
   loginLoading.style.display = view === 'loading' ? '' : 'none';
+  loginTitleEl.textContent = view === 'change' ? (pwChange && pwChange.forced ? 'Elige tu contraseña' : 'Cambiar contraseña')
+    : view === 'reset' ? 'Nueva contraseña' : 'Iniciar sesión';
 }
 function showLogin(){
   appEl.classList.remove('visible');
@@ -1850,6 +1869,12 @@ loginForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
+    if (res.ok && data.must_change && data.token){
+      // contraseña temporal: hay que elegir una propia antes de entrar (el token restringido no se guarda)
+      loginPass.value = '';
+      openChangePassword(true, data.token, password);
+      return;
+    }
     if (res.ok && data.token){
       localStorage.setItem(AUTH_KEY, data.token);
       localStorage.setItem(AUTH_BADGE_KEY, data.show_data_badge ? '1' : '0');
@@ -1867,35 +1892,85 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
-showForgotBtn.addEventListener('click', () => {
-  forgotError.style.display = 'none';
-  forgotOk.style.display = 'none';
-  forgotEmail.value = loginEmail.value;
-  showLoginView('forgot');
+function openChangePassword(forced, token, current){
+  pwChange = { forced, token, current };
+  changeError.style.display = 'none';
+  changeCurrent.value = ''; changePass1.value = ''; changePass2.value = '';
+  changeCurrentWrap.style.display = forced ? 'none' : '';
+  changeSub.textContent = forced
+    ? 'Has entrado con una contraseña temporal. Elige la tuya para continuar.'
+    : 'Escribe tu contraseña actual y la nueva. Se cerrarán tus otras sesiones abiertas.';
+  loginOverlay.style.display = 'flex';
+  showLoginView('change');
+  setTimeout(() => (forced ? changePass1 : changeCurrent).focus(), 50);
+}
+function closeChangePassword(){
+  const wasForced = !!(pwChange && pwChange.forced);
+  pwChange = null;
+  changeCurrent.value = ''; changePass1.value = ''; changePass2.value = '';
+  if (wasForced) showLogin();
+  else { loginOverlay.style.display = 'none'; showLoginView('login'); }
+}
+changeCancelBtn.addEventListener('click', closeChangePassword);
+document.getElementById('change-pass-btn').addEventListener('click', () => {
+  openChangePassword(false, localStorage.getItem(AUTH_KEY), null);
 });
-showLoginFromForgotBtn.addEventListener('click', () => showLoginView('login'));
 
-forgotForm.addEventListener('submit', async (e) => {
+changeForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  forgotError.style.display = 'none';
-  forgotOk.style.display = 'none';
-  const email = forgotEmail.value.trim().toLowerCase();
+  if (!pwChange) return;
+  changeError.style.display = 'none';
+  const fail = (msg) => { changeError.textContent = msg; changeError.style.display = 'block'; };
+  const current = pwChange.forced ? pwChange.current : changeCurrent.value;
+  if (!current) return fail('Escribe tu contraseña actual.');
+  if (changePass1.value.length < PASSWORD_MIN) return fail(`La contraseña nueva debe tener al menos ${PASSWORD_MIN} caracteres.`);
+  if (changePass1.value !== changePass2.value) return fail('Las dos contraseñas nuevas no coinciden.');
   try {
-    await fetch(`${AUTH_API_URL}/api/request-reset`, {
+    const res = await fetch(`${AUTH_API_URL}/api/change-password`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pwChange.token}` },
+      body: JSON.stringify({ current_password: current, new_password: changePass1.value }),
     });
-    forgotOk.style.display = 'block';
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.token){
+      const wasForced = pwChange.forced;
+      pwChange = null;
+      changeCurrent.value = ''; changePass1.value = ''; changePass2.value = '';
+      localStorage.setItem(AUTH_KEY, data.token);
+      localStorage.setItem(AUTH_BADGE_KEY, data.show_data_badge ? '1' : '0');
+      localStorage.setItem(AUTH_ADMIN_KEY, data.is_admin ? '1' : '0');
+      localStorage.setItem(AUTH_EMAIL_KEY, data.email || '');
+      if (wasForced){ updateDataBadge(); loadAppAndShow(); }
+      else {
+        loginOverlay.style.display = 'none';
+        showLoginView('login');
+        if (typeof trkToast === 'function') trkToast('Contraseña cambiada. Se han cerrado tus otras sesiones.');
+      }
+    } else if (res.status === 401){
+      const wasForced = pwChange.forced;
+      if (wasForced){
+        closeChangePassword();
+        loginError.textContent = 'Ha caducado el tiempo para elegir la contraseña. Vuelve a iniciar sesión con la temporal.';
+        loginError.style.display = 'block';
+      } else {
+        fail('Tu sesión ya no es válida. Vuelve a iniciar sesión.');
+      }
+    } else {
+      fail(data.error || 'No se ha podido cambiar la contraseña.');
+    }
   } catch (err){
-    forgotError.textContent = 'No se ha podido conectar con el servidor. Inténtalo de nuevo.';
-    forgotError.style.display = 'block';
+    fail('No se ha podido conectar con el servidor. Inténtalo de nuevo.');
   }
 });
 
 resetForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   resetError.style.display = 'none';
+  if (resetPass1.value.length < PASSWORD_MIN){
+    resetError.textContent = `La contraseña debe tener al menos ${PASSWORD_MIN} caracteres.`;
+    resetError.style.display = 'block';
+    return;
+  }
   if (resetPass1.value !== resetPass2.value){
     resetError.textContent = 'Las dos contraseñas no coinciden.';
     resetError.style.display = 'block';
@@ -3707,6 +3782,7 @@ const AUDIT_TEXT = {
   badge_off:               t => `desactivó el aviso de datos a <b>${t}</b>`,
   password_reset_by_admin: t => `reseteó la contraseña de <b>${t}</b>`,
   deleted:                 t => `eliminó la cuenta de <b>${t}</b>`,
+  password_changed:        (t, d) => `cambió su contraseña${d === 'tras contraseña temporal' ? ' (tras la temporal)' : ''}`,
   login_locked:            t => `bloqueó el acceso de <b>${t}</b> 15 min por demasiados intentos fallidos`,
 };
 
@@ -3764,7 +3840,7 @@ function renderUsersListView(items){
     <div class="fcamo-list-item" style="cursor:default;flex-wrap:wrap;gap:10px 18px;">
       <span class="fcamo-list-code" style="min-width:200px;">${escHtml(u.email)}${u.email === me ? ' <span style="font-weight:500;color:var(--muted-2);font-size:11px;">(tú)</span>' : ''}</span>
       <span class="fcamo-list-meta" style="flex:1;">
-        <div class="fcamo-list-sub">Alta ${new Date(u.created_at * 1000).toLocaleDateString('es-ES')}${u.updated_at ? ' · última actualización ' + timeAgo(u.updated_at) : ''}</div>
+        <div class="fcamo-list-sub">Alta ${new Date(u.created_at * 1000).toLocaleDateString('es-ES')}${u.updated_at ? ' · última actualización ' + timeAgo(u.updated_at) : ''}${u.must_change_password ? ' · <b style="color:var(--amber);">pendiente de elegir contraseña</b>' : ''}</div>
       </span>
       <label class="switch-row" style="margin:0;width:auto;">
         <span class="switch"><input type="checkbox" class="user-toggle-admin" data-email="${escHtml(u.email)}" ${u.is_admin ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
@@ -3774,7 +3850,7 @@ function renderUsersListView(items){
         <span class="switch"><input type="checkbox" class="user-toggle-badge" data-email="${escHtml(u.email)}" ${u.show_data_badge ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
         <span class="label-text">Aviso datos</span>
       </label>
-      <button type="button" class="ov-see-all user-reset-btn" data-email="${escHtml(u.email)}" style="margin:0;">Resetear contraseña</button>
+      <button type="button" class="ov-see-all user-reset-btn" data-email="${escHtml(u.email)}" ${u.email === me ? 'disabled title="Para cambiar tu contraseña usa el botón «Contraseña» de la cabecera" style="margin:0;opacity:.35;cursor:not-allowed;"' : 'style="margin:0;"'}>Resetear contraseña</button>
       <button type="button" class="fcamo-delete-btn user-delete-btn" data-email="${escHtml(u.email)}" ${u.email === me ? 'disabled style="opacity:.35;cursor:not-allowed;"' : ''}>Eliminar</button>
     </div>`).join('');
 
@@ -3805,7 +3881,7 @@ function renderUsersListView(items){
       if (!confirm(`¿Generar una contraseña temporal nueva para ${btn.dataset.email}? La anterior dejará de funcionar.`)) return;
       try {
         const { temp_password } = await usersApi(`/${encodeURIComponent(btn.dataset.email)}`, { method:'PATCH', body: JSON.stringify({ reset_password: true }) });
-        prompt(`Contraseña temporal para ${btn.dataset.email} (cópiala y pásasela; no se volverá a mostrar):`, temp_password);
+        prompt(`Contraseña temporal para ${btn.dataset.email}. Cópiala y pásasela: no se volverá a mostrar. Al entrar tendrá que elegir una propia, y sus sesiones abiertas se han cerrado.`, temp_password);
       } catch (err){
         alert('No se ha podido resetear: ' + err.message);
       }
@@ -3846,7 +3922,7 @@ function renderNewUserForm(){
     const show_data_badge = document.getElementById('user-f-badge').checked;
     try {
       const { temp_password } = await usersApi('', { method:'POST', body: JSON.stringify({ email: emailVal, is_admin, show_data_badge }) });
-      alert(`Usuario creado. Contraseña temporal para ${emailVal} (cópiala y pásasela; no se volverá a mostrar):\n\n${temp_password}`);
+      alert(`Usuario creado. Contraseña temporal para ${emailVal} (cópiala y pásasela; no se volverá a mostrar). Al entrar tendrá que elegir una propia:\n\n${temp_password}`);
       openUsersPanel();
     } catch (err){
       alert('No se ha podido crear: ' + err.message);
