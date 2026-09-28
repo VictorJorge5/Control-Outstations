@@ -282,6 +282,7 @@
   .home-tile-txt{flex:1;min-width:0;}
   .home-tile-name{font-size:14px;font-weight:700;color:var(--ink);}
   .home-tile-desc{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .home-tile-stat{font-size:11.5px;font-weight:600;color:var(--ink-2);margin-top:6px;min-height:14px;}
   .home-tile-count{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--ink);flex-shrink:0;}
   .home-tile.warn .home-tile-count{color:var(--amber);}
   @media (max-width:880px){ .home-view{padding:24px 16px 36px;} }
@@ -1330,38 +1331,38 @@
       <div class="home-grid">
       <button type="button" class="home-tile" id="home-t-contracted">
         <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span>
-        <span class="home-tile-txt"><div class="home-tile-name">Proveedores contratados</div><div class="home-tile-desc">Red contratada en el mapa</div></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Proveedores contratados</div><div class="home-tile-desc">Red contratada en el mapa</div><div class="home-tile-stat" id="home-s-contracted"></div></span>
         <span class="home-tile-count"><span id="home-c-contracted"></span></span>
       </button>
       <button type="button" class="home-tile" id="home-t-alt">
         <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span>
-        <span class="home-tile-txt"><div class="home-tile-name">Proveedores no contratados</div><div class="home-tile-desc">Proveedores de respaldo por estación</div></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Proveedores no contratados</div><div class="home-tile-desc">Proveedores de respaldo por estación</div><div class="home-tile-stat" id="home-s-alt"></div></span>
         <span class="home-tile-count"><span id="home-c-alt"></span></span>
       </button>
       <button type="button" class="home-tile" id="home-t-fcamo">
         <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg></span>
-        <span class="home-tile-txt"><div class="home-tile-name">F-CAMO</div><div class="home-tile-desc">Checklists F-CAMO-IBE-14 abiertos</div></span>
+        <span class="home-tile-txt"><div class="home-tile-name">F-CAMO</div><div class="home-tile-desc">Checklists F-CAMO-IBE-14 abiertos</div><div class="home-tile-stat" id="home-s-fcamo"></div></span>
         <span class="home-tile-count"><span id="home-c-fcamo"></span></span>
       </button>
       <button type="button" class="home-tile warn" id="home-t-uncov">
         <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></span>
-        <span class="home-tile-txt"><div class="home-tile-name">Estaciones sin proveedor</div><div class="home-tile-desc">Seguimiento de estaciones sin cobertura</div></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Estaciones sin proveedor</div><div class="home-tile-desc">Seguimiento de estaciones sin cobertura</div><div class="home-tile-stat" id="home-s-uncov"></div></span>
         <span class="home-tile-count"><span id="home-c-uncov"></span></span>
       </button>
       <button type="button" class="home-tile" id="home-t-pernocta">
         <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
-        <span class="home-tile-txt"><div class="home-tile-name">Pernoctas</div><div class="home-tile-desc">Matriz de pernoctas por estación y mes</div></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Pernoctas</div><div class="home-tile-desc">Matriz de pernoctas por estación y mes</div><div class="home-tile-stat" id="home-s-pernocta"></div></span>
         <span class="home-tile-count"><span id="home-c-pernocta"></span></span>
       </button>
       <button type="button" class="home-tile" id="home-t-users" style="display:none;">
         <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-        <span class="home-tile-txt"><div class="home-tile-name">Gestión de usuarios</div><div class="home-tile-desc">Altas, permisos y contraseñas</div></span>
-        <span class="home-tile-count"></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Gestión de usuarios</div><div class="home-tile-desc">Altas, permisos y contraseñas</div><div class="home-tile-stat" id="home-s-users"></div></span>
+        <span class="home-tile-count"><span id="home-c-users"></span></span>
       </button>
       <button type="button" class="home-tile" id="home-t-activity">
         <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
-        <span class="home-tile-txt"><div class="home-tile-name">Actividad reciente</div><div class="home-tile-desc">Notas y F-CAMO de todo el equipo</div></span>
-        <span class="home-tile-count"></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Actividad reciente</div><div class="home-tile-desc">Notas y F-CAMO de todo el equipo</div><div class="home-tile-stat" id="home-s-activity"></div></span>
+        <span class="home-tile-count"><span id="home-c-activity"></span></span>
       </button>
       </div>
     </div>
@@ -1570,6 +1571,7 @@
         <div class="modal-city">Altas, permisos y contraseñas de acceso a la app</div>
       </div>
       <div class="modal-actions">
+        <button class="btn-excel" id="btn-users-audit" style="background:var(--muted);">Historial</button>
         <button class="btn-excel" id="btn-new-user" style="background:var(--ink);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Nuevo usuario</button>
         <button class="btn-close" id="btn-close-users">✕</button>
       </div>
@@ -1613,6 +1615,39 @@ document.addEventListener('visibilitychange', () => {
 });
 
 const AUTH_API_URL = 'https://control-estaciones-auth.victorjjm5.workers.dev';
+window.homeData = {};
+
+// Si el Worker responde 401 con la app abierta (cuenta dada de baja o token
+// caducado), se cierra la sesion y se vuelve al login en vez de dejar la app rota.
+// Se excluyen las rutas de login/reset, donde un 401 es una respuesta normal.
+const _origFetch = window.fetch.bind(window);
+window.fetch = async (input, init) => {
+  const res = await _origFetch(input, init);
+  try {
+    const url = typeof input === 'string' ? input : input.url;
+    if (res.status === 401 && url.startsWith(AUTH_API_URL)
+        && !['/api/login','/api/request-reset','/api/reset-password'].some(r => url.includes(r))
+        && appEl.classList.contains('visible')){
+      forceLogout('Tu sesión ya no es válida (cuenta dada de baja o sesión caducada). Vuelve a iniciar sesión.');
+    }
+  } catch (e) { /* nunca romper la peticion original */ }
+  return res;
+};
+function clearSession(){
+  localStorage.removeItem(AUTH_KEY);
+  localStorage.removeItem(AUTH_BADGE_KEY);
+  localStorage.removeItem(AUTH_ADMIN_KEY);
+  localStorage.removeItem(AUTH_EMAIL_KEY);
+}
+function forceLogout(message){
+  document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open'));
+  clearSession();
+  showLogin();
+  if (message){
+    loginError.textContent = message;
+    loginError.style.display = 'block';
+  }
+}
 const AUTH_KEY = 'ib_control_estaciones_auth';
 const AUTH_BADGE_KEY = 'ib_control_estaciones_badge';
 const AUTH_ADMIN_KEY = 'ib_control_estaciones_admin';
@@ -1651,39 +1686,40 @@ function showApp(){
   if (usersBtn) usersBtn.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
   const usersTile = document.getElementById('home-t-users');
   if (usersTile) usersTile.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
-  goHome();
+  applyRoute();
 }
 
-// ---- pagina de inicio tras el login ----
+// ---- pagina de inicio tras el login, con rutas #inicio / #mapa ----
 function refreshHomeCounts(){
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  try {
-    set('home-c-contracted', allProviders.length);
-    set('home-c-alt', allAltProviders.length);
-    set('home-c-pernocta', STATIONS.filter(s => s.pernocta).length);
-  } catch (e) { /* los datos aun no estan cargados */ }
-  set('home-c-fcamo', document.getElementById('fcamo-pending-count').textContent);
-  set('home-c-uncov', document.getElementById('uncovered-count').textContent);
+  if (typeof renderHomeStats === 'function') renderHomeStats();
 }
-function goHome(){
+function enterHome(){
   appEl.classList.add('home-mode');
   refreshHomeCounts();
+  if (typeof refreshHomeExtras === 'function') refreshHomeExtras();
 }
-function leaveHome(){
+function enterMap(){
   appEl.classList.remove('home-mode');
   if (window.__map){
     setTimeout(() => window.__map.invalidateSize(), 50);
   }
 }
-// los contadores de F-CAMO y sin proveedor llegan del servidor un poco despues: los seguimos en vivo
-['fcamo-pending-count', 'uncovered-count'].forEach(id => {
-  new MutationObserver(refreshHomeCounts).observe(document.getElementById(id), { childList:true, characterData:true, subtree:true });
-});
+function goHome(){ if (location.hash !== '#inicio') location.hash = '#inicio'; else enterHome(); }
+function goMap(){ if (location.hash !== '#mapa') location.hash = '#mapa'; else enterMap(); }
+function applyRoute(){
+  if (!appEl.classList.contains('visible')) return;
+  if (location.hash === '#mapa') enterMap();
+  else {
+    if (location.hash !== '#inicio') history.replaceState(null, '', '#inicio');
+    enterHome();
+  }
+}
+window.addEventListener('hashchange', applyRoute);
 const headerLogo = document.querySelector('header .logo');
 headerLogo.title = 'Ir al inicio';
 headerLogo.addEventListener('click', goHome);
-document.getElementById('home-t-contracted').addEventListener('click', () => { leaveHome(); switchMode('main'); });
-document.getElementById('home-t-alt').addEventListener('click', () => { leaveHome(); switchMode('alt'); });
+document.getElementById('home-t-contracted').addEventListener('click', () => { goMap(); switchMode('main'); });
+document.getElementById('home-t-alt').addEventListener('click', () => { goMap(); switchMode('alt'); });
 [
   ['home-t-fcamo', 'open-fcamo-header-panel'],
   ['home-t-uncov', 'open-uncovered-panel'],
@@ -1844,10 +1880,8 @@ resetForm.addEventListener('submit', async (e) => {
 });
 
 logoutBtn.addEventListener('click', () => {
-  localStorage.removeItem(AUTH_KEY);
-  localStorage.removeItem(AUTH_BADGE_KEY);
-  localStorage.removeItem(AUTH_ADMIN_KEY);
-  localStorage.removeItem(AUTH_EMAIL_KEY);
+  document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open'));
+  clearSession();
   showLogin();
 });
 
@@ -2776,6 +2810,8 @@ function updateFcamoPendingBadge(items){
   const n = items.filter(i => i.status !== 'completed').length;
   document.getElementById('fcamo-pending-count').textContent = n;
   document.getElementById('open-fcamo-header-panel').style.display = 'flex';
+  window.homeData.fcamo = items;
+  renderHomeStats();
 }
 async function refreshFcamoBadge(){
   try {
@@ -3086,6 +3122,8 @@ async function refreshUncoveredBadge(){
     const codes = uncoveredStationCodes().filter(c => !covered.has(c));
     document.getElementById('uncovered-count').textContent = codes.length;
     uncoveredBtn.style.display = 'flex';
+    window.homeData.notes = items;
+    renderHomeStats();
   } catch (err){ /* se reintentara al abrir el panel */ }
 }
 
@@ -3407,6 +3445,45 @@ document.getElementById('open-users-panel').addEventListener('click', openUsersP
 btnCloseUsers.addEventListener('click', () => usersOverlay.classList.remove('open'));
 usersOverlay.addEventListener('click', (e) => { if (e.target === usersOverlay) usersOverlay.classList.remove('open'); });
 btnNewUser.addEventListener('click', renderNewUserForm);
+const btnUsersAudit = document.getElementById('btn-users-audit');
+btnUsersAudit.addEventListener('click', openUsersAudit);
+
+function escHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const AUDIT_TEXT = {
+  created:                 (t, d) => `dio de alta a <b>${t}</b>${d === 'admin' ? ' como administrador' : ''}`,
+  made_admin:              t => `dio permisos de administrador a <b>${t}</b>`,
+  removed_admin:           t => `quitó los permisos de administrador a <b>${t}</b>`,
+  badge_on:                t => `activó el aviso de datos a <b>${t}</b>`,
+  badge_off:               t => `desactivó el aviso de datos a <b>${t}</b>`,
+  password_reset_by_admin: t => `reseteó la contraseña de <b>${t}</b>`,
+  deleted:                 t => `eliminó la cuenta de <b>${t}</b>`,
+  login_locked:            t => `bloqueó el acceso de <b>${t}</b> 15 min por demasiados intentos fallidos`,
+};
+
+async function openUsersAudit(){
+  btnNewUser.style.display = 'none';
+  btnUsersAudit.style.display = 'none';
+  usersBody.innerHTML = '<div class="no-data">Cargando…</div>';
+  try {
+    const { items } = await usersApi('/audit', { method: 'GET' });
+    const rows = items.length ? items.map(a => {
+      const fn = AUDIT_TEXT[a.action];
+      const who = a.changed_by === 'sistema' ? 'El sistema' : `<b>${escHtml(a.changed_by)}</b>`;
+      const text = fn ? fn(escHtml(a.target_email), a.detail) : `${escHtml(a.action)} · <b>${escHtml(a.target_email)}</b>`;
+      return `<div class="activity-item"><div class="activity-text">${who} ${text}</div><div class="activity-time">${timeAgo(a.changed_at)}</div></div>`;
+    }).join('') : '<div class="no-data">Todavía no hay cambios registrados.</div>';
+    usersBody.innerHTML = `
+      <button class="fcamo-back" id="users-audit-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Todos los usuarios</button>
+      <div class="fcamo-detail-title" style="margin-bottom:14px;">Historial de gestión de usuarios</div>
+      ${rows}`;
+    document.getElementById('users-audit-back').addEventListener('click', openUsersPanel);
+  } catch (err){
+    usersBody.innerHTML = `<div class="no-data">No se ha podido cargar (${escHtml(err.message)}).</div>`;
+  }
+}
 
 async function usersApi(path, options){
   const token = localStorage.getItem(AUTH_KEY);
@@ -3421,6 +3498,7 @@ async function usersApi(path, options){
 
 async function openUsersPanel(){
   btnNewUser.style.display = '';
+  btnUsersAudit.style.display = '';
   usersBody.innerHTML = '<div class="no-data">Cargando…</div>';
   usersOverlay.classList.add('open');
   try {
@@ -3433,23 +3511,24 @@ async function openUsersPanel(){
 
 function renderUsersListView(items){
   btnNewUser.style.display = '';
+  btnUsersAudit.style.display = '';
   const me = localStorage.getItem(AUTH_EMAIL_KEY) || '';
   usersBody.innerHTML = items.map(u => `
     <div class="fcamo-list-item" style="cursor:default;flex-wrap:wrap;gap:10px 18px;">
-      <span class="fcamo-list-code" style="min-width:200px;">${u.email}${u.email === me ? ' <span style="font-weight:500;color:var(--muted-2);font-size:11px;">(tú)</span>' : ''}</span>
+      <span class="fcamo-list-code" style="min-width:200px;">${escHtml(u.email)}${u.email === me ? ' <span style="font-weight:500;color:var(--muted-2);font-size:11px;">(tú)</span>' : ''}</span>
       <span class="fcamo-list-meta" style="flex:1;">
         <div class="fcamo-list-sub">Alta ${new Date(u.created_at * 1000).toLocaleDateString('es-ES')}${u.updated_at ? ' · última actualización ' + timeAgo(u.updated_at) : ''}</div>
       </span>
       <label class="switch-row" style="margin:0;width:auto;">
-        <span class="switch"><input type="checkbox" class="user-toggle-admin" data-email="${u.email}" ${u.is_admin ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
+        <span class="switch"><input type="checkbox" class="user-toggle-admin" data-email="${escHtml(u.email)}" ${u.is_admin ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
         <span class="label-text">Admin</span>
       </label>
       <label class="switch-row" style="margin:0;width:auto;">
-        <span class="switch"><input type="checkbox" class="user-toggle-badge" data-email="${u.email}" ${u.show_data_badge ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
+        <span class="switch"><input type="checkbox" class="user-toggle-badge" data-email="${escHtml(u.email)}" ${u.show_data_badge ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
         <span class="label-text">Aviso datos</span>
       </label>
-      <button type="button" class="ov-see-all user-reset-btn" data-email="${u.email}" style="margin:0;">Resetear contraseña</button>
-      <button type="button" class="fcamo-delete-btn user-delete-btn" data-email="${u.email}" ${u.email === me ? 'disabled style="opacity:.35;cursor:not-allowed;"' : ''}>Eliminar</button>
+      <button type="button" class="ov-see-all user-reset-btn" data-email="${escHtml(u.email)}" style="margin:0;">Resetear contraseña</button>
+      <button type="button" class="fcamo-delete-btn user-delete-btn" data-email="${escHtml(u.email)}" ${u.email === me ? 'disabled style="opacity:.35;cursor:not-allowed;"' : ''}>Eliminar</button>
     </div>`).join('');
 
   usersBody.querySelectorAll('.user-toggle-admin').forEach(cb => {
@@ -3502,6 +3581,7 @@ function renderUsersListView(items){
 
 function renderNewUserForm(){
   btnNewUser.style.display = 'none';
+  btnUsersAudit.style.display = 'none';
   usersBody.innerHTML = `
     <button class="fcamo-back" id="user-form-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Todos los usuarios</button>
     <div class="fcamo-detail-title" style="margin-bottom:18px;">Nuevo usuario</div>
@@ -3525,6 +3605,73 @@ function renderNewUserForm(){
       alert('No se ha podido crear: ' + err.message);
     }
   });
+}
+
+// ---- pagina de inicio: contadores y resumenes de cada tarjeta ----
+function renderHomeStats(){
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const hd = window.homeData;
+
+  set('home-c-contracted', allProviders.length);
+  set('home-s-contracted', `${STATIONS.filter(s => s.in_schedule).length} estaciones con vuelo IB 26/27`);
+  set('home-c-alt', allAltProviders.length);
+  set('home-s-alt', `${ALT_STATIONS.length} estaciones con alternativas`);
+
+  const per = STATIONS.filter(s => s.pernocta);
+  const perSin = per.filter(s => s.pending).length;
+  set('home-c-pernocta', per.length);
+  set('home-s-pernocta', perSin ? `${perSin} sin proveedor contratado` : 'Todas con proveedor');
+
+  if (hd.fcamo){
+    const pending = hd.fcamo.filter(i => i.status !== 'completed').length;
+    const done = hd.fcamo.length - pending;
+    set('home-c-fcamo', pending);
+    set('home-s-fcamo', hd.fcamo.length ? `${done} completados · ${pending} pendientes` : 'Ninguno abierto todavía');
+  }
+
+  if (hd.notes){
+    const byCode = {};
+    hd.notes.forEach(n => { byCode[n.station_code] = n; });
+    const pend = uncoveredStationCodes().filter(c => !(byCode[c] && byCode[c].covered));
+    const cnt = { none:0, contacted:0, negotiating:0, interim:0 };
+    pend.forEach(c => { const st = (byCode[c] && byCode[c].stage) || 'none'; if (st in cnt) cnt[st]++; });
+    const labels = { none:'sin gestionar', contacted:'contactadas', negotiating:'negociando', interim:'provisional' };
+    const parts = Object.keys(cnt).filter(k => cnt[k] > 0).map(k => `${cnt[k]} ${labels[k]}`);
+    set('home-c-uncov', pend.length);
+    set('home-s-uncov', pend.length ? parts.join(' · ') : 'Todas las estaciones cubiertas');
+  }
+
+  if (hd.users){
+    const admins = hd.users.filter(u => u.is_admin).length;
+    set('home-c-users', hd.users.length);
+    set('home-s-users', `${admins} administrador${admins === 1 ? '' : 'es'}`);
+  }
+
+  if (hd.activity){
+    const now = Math.floor(Date.now() / 1000);
+    const n24 = hd.activity.filter(a => now - a.changed_at < 86400).length;
+    set('home-c-activity', (n24 >= 50) ? '50+' : n24);
+    set('home-s-activity', hd.activity.length ? `cambios en 24 h · último ${timeAgo(hd.activity[0].changed_at)}` : 'Sin actividad registrada');
+  }
+}
+
+// vuelve a pedir los datos de las tarjetas cada vez que se entra en el inicio
+async function refreshHomeExtras(){
+  const tasks = [refreshFcamoBadge(), refreshUncoveredBadge()];
+  tasks.push(
+    fetch(`${AUTH_API_URL}/api/activity`, { headers: { 'Authorization': `Bearer ${localStorage.getItem(AUTH_KEY)}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d){ window.homeData.activity = d.items; renderHomeStats(); } })
+      .catch(() => {})
+  );
+  if (localStorage.getItem(AUTH_ADMIN_KEY) === '1'){
+    tasks.push(
+      usersApi('', { method: 'GET' })
+        .then(d => { window.homeData.users = d.items; renderHomeStats(); })
+        .catch(() => {})
+    );
+  }
+  await Promise.all(tasks);
 }
 
 // ---- Excel export: replica exacta de la macro V18 ----
