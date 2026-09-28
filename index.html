@@ -257,9 +257,11 @@
   .home-view{display:none;flex:1;min-height:0;overflow-y:auto;background:var(--bg);padding:36px 28px 48px;}
   .app.home-mode .home-view{display:block;}
   .app.home-mode .body{display:none;}
-  .app.home-mode .kpis, .app.home-mode .alert-pill{display:none !important;}
-  .home-btn{display:none;}
-  .app:not(.home-mode) .home-btn{display:inline-flex;}
+  .app.home-mode .kpis{display:none !important;}
+  /* Estos accesos ahora viven en la pagina de inicio; los elementos siguen en el DOM
+     (llevan contadores y listeners) pero no se ven ni en el mapa ni en la cabecera. */
+  #open-uncovered-panel, #open-fcamo-header-panel, #open-activity-overview, #open-users-panel{display:none !important;}
+  header .logo{cursor:pointer;}
   .home-inner{max-width:920px;margin:0 auto;}
   .home-title{font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;}
   .home-sub{font-size:13px;color:var(--muted);margin-bottom:26px;}
@@ -1318,7 +1320,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
       Actualizado 17 sep
     </span>
-    <button class="logout-btn home-btn" id="home-btn">Inicio</button>
     <button class="logout-btn" id="logout-btn">Cerrar sesión</button>
   </header>
 
@@ -1678,7 +1679,9 @@ function leaveHome(){
 ['fcamo-pending-count', 'uncovered-count'].forEach(id => {
   new MutationObserver(refreshHomeCounts).observe(document.getElementById(id), { childList:true, characterData:true, subtree:true });
 });
-document.getElementById('home-btn').addEventListener('click', goHome);
+const headerLogo = document.querySelector('header .logo');
+headerLogo.title = 'Ir al inicio';
+headerLogo.addEventListener('click', goHome);
 document.getElementById('home-t-contracted').addEventListener('click', () => { leaveHome(); switchMode('main'); });
 document.getElementById('home-t-alt').addEventListener('click', () => { leaveHome(); switchMode('alt'); });
 [
