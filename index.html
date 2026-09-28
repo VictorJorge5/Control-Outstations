@@ -253,6 +253,37 @@
   .kpi .lbl{font-size:10.5px;color:rgba(255,255,255,0.72);letter-spacing:0.4px;font-weight:500;}
   .kpi.pend .num{color:#FFE3A3;}
 
+  /* ---------- PAGINA DE INICIO ---------- */
+  .home-view{display:none;flex:1;min-height:0;overflow-y:auto;background:var(--bg);padding:36px 28px 48px;}
+  .app.home-mode .home-view{display:block;}
+  .app.home-mode .body{display:none;}
+  .app.home-mode .kpis, .app.home-mode .alert-pill{display:none !important;}
+  .home-btn{display:none;}
+  .app:not(.home-mode) .home-btn{display:inline-flex;}
+  .home-inner{max-width:920px;margin:0 auto;}
+  .home-title{font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+  .home-sub{font-size:13px;color:var(--muted);margin-bottom:26px;}
+  .home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+  .home-tile{
+    display:flex;align-items:center;gap:14px;text-align:left;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-md);
+    padding:18px 18px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;
+    transition:border-color .12s ease, background .12s ease, transform .12s ease;
+  }
+  .home-tile:hover{border-color:var(--muted-2);background:var(--bg);transform:translateY(-1px);}
+  .home-tile-icon{
+    width:40px;height:40px;border-radius:10px;flex-shrink:0;
+    background:var(--red-50);color:var(--red);display:flex;align-items:center;justify-content:center;
+  }
+  .home-tile-icon svg{width:20px;height:20px;}
+  .home-tile.warn .home-tile-icon{background:var(--amber-bg);color:var(--amber);}
+  .home-tile-txt{flex:1;min-width:0;}
+  .home-tile-name{font-size:14px;font-weight:700;color:var(--ink);}
+  .home-tile-desc{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .home-tile-count{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--ink);flex-shrink:0;}
+  .home-tile.warn .home-tile-count{color:var(--amber);}
+  @media (max-width:880px){ .home-view{padding:24px 16px 36px;} }
+
   /* ---------- BODY LAYOUT ---------- */
   .body{
     flex:1;
@@ -1107,6 +1138,16 @@
   .uncov-stage-select.stage-negotiating{color:var(--amber);background:var(--amber-bg);border-color:#EAD6AC;}
   .uncov-stage-select.stage-interim{color:var(--moon);background:#EEF0F2;border-color:var(--line);}
   .uncov-stage-select.stage-covered{color:var(--ok);background:var(--ok-bg);border-color:#C9E6D6;}
+  .uncov-stage-pill{
+    font-size:9.5px;font-weight:700;letter-spacing:0.3px;
+    padding:3px 8px;border-radius:999px;flex-shrink:0;
+  }
+  .uncov-stage-pill.stage-none{background:var(--bg-inset);color:var(--muted);}
+  .uncov-stage-pill.stage-contacted{background:var(--bg-inset);color:var(--ink-2);}
+  .uncov-stage-pill.stage-negotiating{background:var(--amber-bg);color:var(--amber);}
+  .uncov-stage-pill.stage-interim{background:#EEF0F2;color:var(--moon);}
+  .uncov-stage-pill.stage-covered{background:var(--ok-bg);color:var(--ok);}
+  .fcamo-list-item.is-covered-row{background:var(--ok-bg);border-color:#C9E6D6;}
   .uncov-field-label{font-size:10.5px;font-weight:600;color:var(--muted-2);margin-bottom:5px;}
   .uncov-input{
     width:100%;padding:8px 10px;
@@ -1277,8 +1318,53 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
       Actualizado 17 sep
     </span>
+    <button class="logout-btn home-btn" id="home-btn">Inicio</button>
     <button class="logout-btn" id="logout-btn">Cerrar sesión</button>
   </header>
+
+  <div class="home-view" id="home-view">
+    <div class="home-inner">
+      <div class="home-title">Control de Estaciones</div>
+      <div class="home-sub">Dirección Técnica del Operador · Outstations</div>
+      <div class="home-grid">
+      <button type="button" class="home-tile" id="home-t-contracted">
+        <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Proveedores contratados</div><div class="home-tile-desc">Red contratada en el mapa</div></span>
+        <span class="home-tile-count"><span id="home-c-contracted"></span></span>
+      </button>
+      <button type="button" class="home-tile" id="home-t-alt">
+        <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Proveedores no contratados</div><div class="home-tile-desc">Proveedores de respaldo por estación</div></span>
+        <span class="home-tile-count"><span id="home-c-alt"></span></span>
+      </button>
+      <button type="button" class="home-tile" id="home-t-fcamo">
+        <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg></span>
+        <span class="home-tile-txt"><div class="home-tile-name">F-CAMO</div><div class="home-tile-desc">Checklists F-CAMO-IBE-14 abiertos</div></span>
+        <span class="home-tile-count"><span id="home-c-fcamo"></span></span>
+      </button>
+      <button type="button" class="home-tile warn" id="home-t-uncov">
+        <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Estaciones sin proveedor</div><div class="home-tile-desc">Seguimiento de estaciones sin cobertura</div></span>
+        <span class="home-tile-count"><span id="home-c-uncov"></span></span>
+      </button>
+      <button type="button" class="home-tile" id="home-t-pernocta">
+        <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Pernoctas</div><div class="home-tile-desc">Matriz de pernoctas por estación y mes</div></span>
+        <span class="home-tile-count"><span id="home-c-pernocta"></span></span>
+      </button>
+      <button type="button" class="home-tile" id="home-t-users" style="display:none;">
+        <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Gestión de usuarios</div><div class="home-tile-desc">Altas, permisos y contraseñas</div></span>
+        <span class="home-tile-count"></span>
+      </button>
+      <button type="button" class="home-tile" id="home-t-activity">
+        <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+        <span class="home-tile-txt"><div class="home-tile-name">Actividad reciente</div><div class="home-tile-desc">Notas y F-CAMO de todo el equipo</div></span>
+        <span class="home-tile-count"></span>
+      </button>
+      </div>
+    </div>
+  </div>
 
   <div class="body">
     <div class="mobile-view-toggle" id="mobile-view-toggle">
@@ -1562,10 +1648,48 @@ function showApp(){
   appEl.classList.add('visible');
   const usersBtn = document.getElementById('open-users-panel');
   if (usersBtn) usersBtn.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
+  const usersTile = document.getElementById('home-t-users');
+  if (usersTile) usersTile.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
+  goHome();
+}
+
+// ---- pagina de inicio tras el login ----
+function refreshHomeCounts(){
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  try {
+    set('home-c-contracted', allProviders.length);
+    set('home-c-alt', allAltProviders.length);
+    set('home-c-pernocta', STATIONS.filter(s => s.pernocta).length);
+  } catch (e) { /* los datos aun no estan cargados */ }
+  set('home-c-fcamo', document.getElementById('fcamo-pending-count').textContent);
+  set('home-c-uncov', document.getElementById('uncovered-count').textContent);
+}
+function goHome(){
+  appEl.classList.add('home-mode');
+  refreshHomeCounts();
+}
+function leaveHome(){
+  appEl.classList.remove('home-mode');
   if (window.__map){
     setTimeout(() => window.__map.invalidateSize(), 50);
   }
 }
+// los contadores de F-CAMO y sin proveedor llegan del servidor un poco despues: los seguimos en vivo
+['fcamo-pending-count', 'uncovered-count'].forEach(id => {
+  new MutationObserver(refreshHomeCounts).observe(document.getElementById(id), { childList:true, characterData:true, subtree:true });
+});
+document.getElementById('home-btn').addEventListener('click', goHome);
+document.getElementById('home-t-contracted').addEventListener('click', () => { leaveHome(); switchMode('main'); });
+document.getElementById('home-t-alt').addEventListener('click', () => { leaveHome(); switchMode('alt'); });
+[
+  ['home-t-fcamo', 'open-fcamo-header-panel'],
+  ['home-t-uncov', 'open-uncovered-panel'],
+  ['home-t-pernocta', 'open-pernocta-overview'],
+  ['home-t-users', 'open-users-panel'],
+  ['home-t-activity', 'open-activity-overview'],
+].forEach(([tile, target]) => {
+  document.getElementById(tile).addEventListener('click', () => document.getElementById(target).click());
+});
 function showLoginView(view){
   loginForm.style.display = view === 'login' ? '' : 'none';
   forgotForm.style.display = view === 'forgot' ? '' : 'none';
@@ -3020,74 +3144,30 @@ async function openFcamoDetailById(id){
   }
 }
 
-function uncovCardHtml(code){
+let uncovDetailCode = null;
+
+function uncovListRowHtml(code){
   const s = STATIONS.find(x => x.code === code);
   const n = uncovNotesByCode[code] || { note:'', covered:0, stage:'none', candidate_provider:'', updated_by:'', updated_at:null };
-  const st = stateFor(code);
   const stage = n.stage || 'none';
   const firstFlight = (s && s.schedule && s.schedule.length) ? s.schedule[0][0] : null;
   const fc = uncovFcamoByStation[code];
-
-  let bodyHtml;
-  if (st.editing){
-    bodyHtml = `
-      <div class="uncov-field-label">Proveedor candidato</div>
-      <input type="text" class="uncov-input" id="uncov-cp-${code}" placeholder="Ej: Flying Spanner Ltd." value="${(n.candidate_provider || '').replace(/"/g,'&quot;')}">
-      <div class="uncov-field-label" style="margin-top:10px;">Nota</div>
-      <textarea class="uncov-textarea" id="uncov-ta-${code}" placeholder="Ej: proveedor contactado, a la espera de firmar SGHA…">${n.note || ''}</textarea>
-      <div class="uncov-edit-actions">
-        <button class="uncov-cover-btn to-cover" data-act="save" data-code="${code}">Guardar</button>
-        <button class="uncov-cover-btn to-uncover" data-act="cancel" data-code="${code}">Cancelar</button>
-      </div>`;
-  } else {
-    bodyHtml = `
-      ${n.candidate_provider ? `<div class="uncov-candidate"><b>Proveedor candidato:</b> ${n.candidate_provider.replace(/</g,'&lt;')}</div>` : ''}
-      <div class="uncov-note-text">${n.note ? n.note.replace(/</g,'&lt;') : '<span class="uncov-empty">Sin notas todavía.</span>'}</div>
-      <div class="uncov-meta">
-        ${n.updated_by ? `Última actualización de <b>${n.updated_by}</b>, ${timeAgo(n.updated_at)}` : 'Sin actividad registrada'}
-        <button class="uncov-history-link" data-act="history" data-code="${code}">${st.showHistory ? 'Ocultar historial' : 'Ver historial'}</button>
-      </div>
-      ${st.lockError ? `<div class="uncov-locked-msg">🔒 ${st.lockError} lo está editando ahora mismo. Inténtalo en unos minutos.</div>` : ''}
-      ${fc ? `<button class="uncov-fcamo-link" data-act="open-fcamo" data-id="${fc.id}">📋 F-CAMO ${fc.status === 'completed' ? 'completado' : 'abierto'} para esta estación (${fcamoProgress(fc).done}/${fcamoProgress(fc).total}) →</button>` : ''}`;
-  }
-
-  let historyHtml = '';
-  if (st.showHistory){
-    if (!st.historyItems){
-      historyHtml = '<div class="uncov-history-panel"><div class="no-data">Cargando historial…</div></div>';
-    } else if (!st.historyItems.length){
-      historyHtml = '<div class="uncov-history-panel"><div class="no-data">Sin cambios registrados todavía.</div></div>';
-    } else {
-      historyHtml = '<div class="uncov-history-panel">' + st.historyItems.map(h => {
-        let desc;
-        if (h.action === 'covered') desc = h.value === 'true' ? 'la marcó como cubierta' : 'la marcó como pendiente';
-        else if (h.action === 'stage') desc = `cambió la fase a "${uncovStageLabel(h.value)}"`;
-        else if (h.action === 'candidate_provider') desc = h.value ? `puso como proveedor candidato: "${h.value.replace(/</g,'&lt;')}"` : 'quitó el proveedor candidato';
-        else desc = `escribió: "${h.value.replace(/</g,'&lt;')}"`;
-        return `<div class="uncov-history-item"><b>${h.changed_by}</b> ${desc} <span class="uncov-history-time">· ${timeAgo(h.changed_at)}</span></div>`;
-      }).join('') + '</div>';
-    }
-  }
-
-  return `<div class="uncov-card ${stage === 'covered' ? 'is-covered' : ''}" data-code="${code}">
-    <div class="uncov-head">
-      <div class="uncov-head-left">
-        <span class="uncov-code">${code}</span>
-        <span class="uncov-city">${s ? s.city + ', ' + s.country : ''}${firstFlight ? ' · primer vuelo ' + firstFlight : ''}</span>
-      </div>
-      <select class="uncov-stage-select stage-${stage}" data-act="stage" data-code="${code}">
-        ${UNCOV_STAGES.map(opt => `<option value="${opt.value}" ${stage === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
-      </select>
-    </div>
-    ${bodyHtml}
-    ${historyHtml}
-    <div class="uncov-footer">
-      ${!st.editing ? `<button class="uncov-edit-btn" data-act="edit" data-code="${code}">Editar</button>` : ''}
-    </div>
+  const subParts = [];
+  if (firstFlight) subParts.push('primer vuelo ' + firstFlight);
+  if (n.updated_by) subParts.push('actualizado ' + timeAgo(n.updated_at));
+  if (fc) subParts.push(fc.status === 'completed' ? 'F-CAMO completado' : 'F-CAMO abierto');
+  return `<div class="fcamo-list-item ${stage === 'covered' ? 'is-covered-row' : ''}" data-code="${code}">
+    <span class="fcamo-list-code">${code}</span>
+    <span class="fcamo-list-meta">
+      <div class="fcamo-list-reason">${s ? s.city + ', ' + s.country : ''}</div>
+      <div class="fcamo-list-sub">${subParts.join(' · ') || 'Sin actividad registrada'}</div>
+    </span>
+    <span class="uncov-stage-pill stage-${stage}">${uncovStageLabel(stage).toUpperCase()}</span>
   </div>`;
 }
 
 function renderUncoveredPanel(){
+  uncovDetailCode = null;
   const codes = uncoveredStationCodes();
   if (!codes.length){
     uncoveredBody.innerHTML = '<div class="no-data">No hay estaciones con vuelo y sin proveedor ahora mismo.</div>';
@@ -3108,7 +3188,7 @@ function renderUncoveredPanel(){
     </button>`;
   }
   html += visibleCodes.length
-    ? visibleCodes.map(uncovCardHtml).join('')
+    ? visibleCodes.map(uncovListRowHtml).join('')
     : '<div class="no-data">No hay estaciones pendientes ahora mismo.</div>';
 
   uncoveredBody.innerHTML = html;
@@ -3116,80 +3196,154 @@ function renderUncoveredPanel(){
   const toggleBtn = document.getElementById('uncov-toggle-covered');
   if (toggleBtn) toggleBtn.addEventListener('click', () => { uncovShowCovered = !uncovShowCovered; renderUncoveredPanel(); });
 
-  uncoveredBody.querySelectorAll('[data-act="edit"]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const code = btn.dataset.code;
-      try {
-        const { item } = await notesApi(`/${code}/lock`, { method:'POST' });
-        uncovNotesByCode[code] = item;
-        stateFor(code).editing = true;
-        stateFor(code).lockError = null;
-        renderUncoveredPanel();
-        const ta = document.getElementById(`uncov-ta-${code}`);
-        if (ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
-      } catch (err){
-        stateFor(code).lockError = err.locked_by || 'Otra persona';
-        renderUncoveredPanel();
-      }
-    });
+  uncoveredBody.querySelectorAll('.fcamo-list-item').forEach(el => {
+    el.addEventListener('click', () => openUncoveredDetail(el.dataset.code));
   });
-  uncoveredBody.querySelectorAll('[data-act="cancel"]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const code = btn.dataset.code;
-      try { await notesApi(`/${code}/unlock`, { method:'POST' }); } catch (err){}
-      stateFor(code).editing = false;
-      renderUncoveredPanel();
-    });
+}
+
+function openUncoveredDetail(code){
+  uncovDetailCode = code;
+  renderUncoveredDetailView(code);
+}
+
+function uncovDetailBodyHtml(code){
+  const n = uncovNotesByCode[code] || { note:'', covered:0, stage:'none', candidate_provider:'', updated_by:'', updated_at:null };
+  const st = stateFor(code);
+  if (st.editing){
+    return `
+      <div class="uncov-field-label">Proveedor candidato</div>
+      <input type="text" class="uncov-input" id="uncov-cp-${code}" placeholder="Ej: Flying Spanner Ltd." value="${(n.candidate_provider || '').replace(/"/g,'&quot;')}">
+      <div class="uncov-field-label" style="margin-top:10px;">Nota</div>
+      <textarea class="uncov-textarea" id="uncov-ta-${code}" placeholder="Ej: proveedor contactado, a la espera de firmar SGHA…">${n.note || ''}</textarea>
+      <div class="uncov-edit-actions">
+        <button class="uncov-cover-btn to-cover" data-act="save" data-code="${code}">Guardar</button>
+        <button class="uncov-cover-btn to-uncover" data-act="cancel" data-code="${code}">Cancelar</button>
+      </div>`;
+  }
+  return `
+    ${n.candidate_provider ? `<div class="uncov-candidate"><b>Proveedor candidato:</b> ${n.candidate_provider.replace(/</g,'&lt;')}</div>` : ''}
+    <div class="uncov-note-text">${n.note ? n.note.replace(/</g,'&lt;') : '<span class="uncov-empty">Sin notas todavía.</span>'}</div>
+    <div class="uncov-meta">
+      ${n.updated_by ? `Última actualización de <b>${n.updated_by}</b>, ${timeAgo(n.updated_at)}` : 'Sin actividad registrada'}
+      <button class="uncov-history-link" data-act="history" data-code="${code}">${st.showHistory ? 'Ocultar historial' : 'Ver historial'}</button>
+    </div>
+    ${st.lockError ? `<div class="uncov-locked-msg">🔒 ${st.lockError} lo está editando ahora mismo. Inténtalo en unos minutos.</div>` : ''}
+    <div class="uncov-edit-actions">
+      <button class="uncov-edit-btn" data-act="edit" data-code="${code}">Editar</button>
+    </div>`;
+}
+
+function uncovDetailHistoryHtml(code){
+  const st = stateFor(code);
+  if (!st.showHistory) return '';
+  if (!st.historyItems) return '<div class="uncov-history-panel"><div class="no-data">Cargando historial…</div></div>';
+  if (!st.historyItems.length) return '<div class="uncov-history-panel"><div class="no-data">Sin cambios registrados todavía.</div></div>';
+  return '<div class="uncov-history-panel">' + st.historyItems.map(h => {
+    let desc;
+    if (h.action === 'covered') desc = h.value === 'true' ? 'la marcó como cubierta' : 'la marcó como pendiente';
+    else if (h.action === 'stage') desc = `cambió la fase a "${uncovStageLabel(h.value)}"`;
+    else if (h.action === 'candidate_provider') desc = h.value ? `puso como proveedor candidato: "${h.value.replace(/</g,'&lt;')}"` : 'quitó el proveedor candidato';
+    else desc = `escribió: "${h.value.replace(/</g,'&lt;')}"`;
+    return `<div class="uncov-history-item"><b>${h.changed_by}</b> ${desc} <span class="uncov-history-time">· ${timeAgo(h.changed_at)}</span></div>`;
+  }).join('') + '</div>';
+}
+
+function renderUncoveredDetailView(code){
+  const s = STATIONS.find(x => x.code === code);
+  const n = uncovNotesByCode[code] || { stage:'none' };
+  const stage = n.stage || 'none';
+  const firstFlight = (s && s.schedule && s.schedule.length) ? s.schedule[0][0] : null;
+  const fc = uncovFcamoByStation[code];
+
+  uncoveredBody.innerHTML = `
+    <button class="fcamo-back" id="uncov-detail-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Todas las estaciones</button>
+    <div class="fcamo-detail-head">
+      <div>
+        <div class="fcamo-detail-title"><span class="fcamo-list-code">${code}</span> ${s ? s.city + ', ' + s.country : ''}</div>
+        <div class="fcamo-detail-sub">${firstFlight ? 'Primer vuelo ' + firstFlight : 'Sin vuelo detectado en el horario cargado'}</div>
+      </div>
+      <select class="uncov-stage-select stage-${stage}" data-act="stage" data-code="${code}">
+        ${UNCOV_STAGES.map(opt => `<option value="${opt.value}" ${stage === opt.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+      </select>
+    </div>
+    ${fc ? `<button class="uncov-fcamo-link" data-act="open-fcamo" data-id="${fc.id}">📋 F-CAMO ${fc.status === 'completed' ? 'completado' : 'abierto'} para esta estación (${fcamoProgress(fc).done}/${fcamoProgress(fc).total}) →</button>` : ''}
+    <div id="uncov-detail-body" style="margin-top:14px;">${uncovDetailBodyHtml(code)}</div>
+    <div id="uncov-detail-history">${uncovDetailHistoryHtml(code)}</div>
+  `;
+  wireUncoveredDetailEvents(code);
+}
+
+function wireUncoveredDetailEvents(code){
+  document.getElementById('uncov-detail-back').addEventListener('click', () => { renderUncoveredPanel(); });
+
+  const stageSel = uncoveredBody.querySelector('[data-act="stage"]');
+  if (stageSel) stageSel.addEventListener('change', async () => {
+    try {
+      const { item } = await notesApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ stage: stageSel.value }) });
+      uncovNotesByCode[code] = item;
+      renderUncoveredDetailView(code);
+    } catch (err){
+      alert('No se ha podido guardar: ' + err.message);
+      renderUncoveredDetailView(code);
+    }
   });
-  uncoveredBody.querySelectorAll('[data-act="save"]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const code = btn.dataset.code;
+
+  const fcamoLink = uncoveredBody.querySelector('[data-act="open-fcamo"]');
+  if (fcamoLink) fcamoLink.addEventListener('click', () => openFcamoDetailById(parseInt(fcamoLink.dataset.id, 10)));
+
+  const editBtn = uncoveredBody.querySelector('[data-act="edit"]');
+  if (editBtn) editBtn.addEventListener('click', async () => {
+    try {
+      const { item } = await notesApi(`/${code}/lock`, { method:'POST' });
+      uncovNotesByCode[code] = item;
+      stateFor(code).editing = true;
+      stateFor(code).lockError = null;
+      renderUncoveredDetailView(code);
       const ta = document.getElementById(`uncov-ta-${code}`);
-      const cp = document.getElementById(`uncov-cp-${code}`);
+      if (ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    } catch (err){
+      stateFor(code).lockError = err.locked_by || 'Otra persona';
+      renderUncoveredDetailView(code);
+    }
+  });
+
+  const cancelBtn = uncoveredBody.querySelector('[data-act="cancel"]');
+  if (cancelBtn) cancelBtn.addEventListener('click', async () => {
+    try { await notesApi(`/${code}/unlock`, { method:'POST' }); } catch (err){}
+    stateFor(code).editing = false;
+    renderUncoveredDetailView(code);
+  });
+
+  const saveBtn = uncoveredBody.querySelector('[data-act="save"]');
+  if (saveBtn) saveBtn.addEventListener('click', async () => {
+    const ta = document.getElementById(`uncov-ta-${code}`);
+    const cp = document.getElementById(`uncov-cp-${code}`);
+    try {
+      const { item } = await notesApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ note: ta.value, candidate_provider: cp.value }) });
+      uncovNotesByCode[code] = item;
+      stateFor(code).editing = false;
+      stateFor(code).showHistory = false;
+      stateFor(code).historyItems = null;
+      renderUncoveredDetailView(code);
+    } catch (err){
+      alert('No se ha podido guardar: ' + err.message);
+    }
+  });
+
+  const histBtn = uncoveredBody.querySelector('[data-act="history"]');
+  if (histBtn) histBtn.addEventListener('click', async () => {
+    const st = stateFor(code);
+    st.showHistory = !st.showHistory;
+    if (st.showHistory && !st.historyItems){
+      renderUncoveredDetailView(code);
       try {
-        const { item } = await notesApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ note: ta.value, candidate_provider: cp.value }) });
-        uncovNotesByCode[code] = item;
-        stateFor(code).editing = false;
-        stateFor(code).showHistory = false;
-        stateFor(code).historyItems = null;
-        renderUncoveredPanel();
+        const { items } = await notesApi(`/${code}/history`, { method:'GET' });
+        st.historyItems = items;
       } catch (err){
-        alert('No se ha podido guardar: ' + err.message);
+        st.historyItems = [];
       }
-    });
-  });
-  uncoveredBody.querySelectorAll('[data-act="stage"]').forEach(sel => {
-    sel.addEventListener('change', async () => {
-      const code = sel.dataset.code;
-      try {
-        const { item } = await notesApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ stage: sel.value }) });
-        uncovNotesByCode[code] = item;
-        renderUncoveredPanel();
-      } catch (err){
-        alert('No se ha podido guardar: ' + err.message);
-        renderUncoveredPanel();
-      }
-    });
-  });
-  uncoveredBody.querySelectorAll('[data-act="open-fcamo"]').forEach(btn => {
-    btn.addEventListener('click', () => openFcamoDetailById(parseInt(btn.dataset.id, 10)));
-  });
-  uncoveredBody.querySelectorAll('[data-act="history"]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const code = btn.dataset.code;
-      const st = stateFor(code);
-      st.showHistory = !st.showHistory;
-      if (st.showHistory && !st.historyItems){
-        renderUncoveredPanel();
-        try {
-          const { items } = await notesApi(`/${code}/history`, { method:'GET' });
-          st.historyItems = items;
-        } catch (err){
-          st.historyItems = [];
-        }
-      }
-      renderUncoveredPanel();
-    });
+    }
+    renderUncoveredDetailView(code);
   });
 }
 
