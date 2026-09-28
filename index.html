@@ -400,6 +400,7 @@
     .trk-row .trk-pill{justify-self:start;}
     .trk-summary{grid-template-columns:1fr;}
     .trk-prov{flex-wrap:wrap;}
+    .trk-prov-main{flex:1 1 100%;}
     .trk-search{flex:1 1 100%;}
   }
 
@@ -828,6 +829,10 @@
     box-shadow:var(--shadow-lg);
   }
   .modal.alt-modal{width:min(640px, 94vw);}
+  /* la ventana es una columna con altura maxima: solo el cuerpo puede encogerse y desplazarse.
+     Sin esto, con mucho contenido (p. ej. "Otros proveedores") el navegador aplastaba la barra de pestañas. */
+  .modal > .modal-header, .modal > .modal-tabs{flex-shrink:0;}
+  .modal > .modal-body{min-height:0;}
   .modal-header{
     display:flex;
     align-items:flex-start;
@@ -1270,6 +1275,14 @@
   #update-dismiss-btn:hover{color:#fff;}
   @media (max-width:560px){
     .update-banner{flex-wrap:wrap;text-align:center;padding:10px 14px;}
+  }
+  /* movil: el encabezado cabe en una sola fila (el titulo se recorta con puntos suspensivos en vez de empujar los botones) */
+  @media (max-width:560px){
+    header{flex-wrap:nowrap;gap:8px;}
+    .titleblock{min-width:0;flex:1 1 auto;}
+    .titleblock .t1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;}
+    .logout-btn{flex-shrink:0;white-space:nowrap;padding:6px 8px;font-size:10.5px;}
+    .pw-btn{margin-left:0;}
   }
 </style>
 </head>
