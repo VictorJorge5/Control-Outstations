@@ -2916,9 +2916,18 @@ function fcamoAllItems(stationTypes){
   const onCall = (stationTypes || []).includes('On call');
   return FCAMO_SECTIONS.filter(s => !(s.hideIfOnCall && onCall)).flatMap(s => s.items);
 }
+// los datos de F-CAMO los escribe cualquier usuario: nunca se fia uno de su formato ni se pintan sin escapar
+function fcamoSafeJson(str, fallback){
+  try {
+    const v = JSON.parse(str);
+    const ok = Array.isArray(fallback) ? Array.isArray(v) : (v && typeof v === 'object' && !Array.isArray(v));
+    return ok ? v : fallback;
+  } catch (e) { return fallback; }
+}
+const fcamoStatusOf = item => item.status === 'completed' ? 'completed' : 'pending';
 function fcamoProgress(item){
-  const types = JSON.parse(item.station_types || '[]');
-  const state = JSON.parse(item.items_state || '{}');
+  const types = fcamoSafeJson(item.station_types, []);
+  const state = fcamoSafeJson(item.items_state, {});
   const all = fcamoAllItems(types);
   const done = all.filter(it => state[it.id]).length;
   return { done, total: all.length, pct: all.length ? Math.round(done / all.length * 100) : 0 };
@@ -2986,8 +2995,8 @@ function renderFcamoListView(items){
     fcamoOverviewBody.innerHTML = '<div class="no-data">Todavía no hay ningún F-CAMO-IBE-14 abierto. Pulsa "Nuevo F-CAMO-IBE-14" para empezar uno.</div>';
     return;
   }
-  const completedCount = items.filter(i => i.status === 'completed').length;
-  const visible = fcamoShowCompleted ? items : items.filter(i => i.status !== 'completed');
+  const completedCount = items.filter(i => fcamoStatusOf(i) === 'completed').length;
+  const visible = fcamoShowCompleted ? items : items.filter(i => fcamoStatusOf(i) !== 'completed');
 
   let html = '';
   if (completedCount > 0){
@@ -3001,15 +3010,16 @@ function renderFcamoListView(items){
     html += visible.map(item => {
       const st = STATIONS.find(s => s.code === item.station_code);
       const { done, total, pct } = fcamoProgress(item);
-      const reasonLabel = (FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason;
+      const reasonLabel = escHtml((FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason);
       const firstFlight = (st && st.schedule && st.schedule.length) ? st.schedule[0][0] : null;
-      return `<div class="fcamo-list-item" data-id="${item.id}">
-        <span class="fcamo-list-code">${item.station_code}</span>
+      const status = fcamoStatusOf(item);
+      return `<div class="fcamo-list-item" data-id="${Number(item.id)}">
+        <span class="fcamo-list-code">${escHtml(item.station_code)}</span>
         <span class="fcamo-list-meta">
           <div class="fcamo-list-reason">${reasonLabel}</div>
-          <div class="fcamo-list-sub">${st ? st.city + ', ' + st.country : ''} · abierto por ${item.created_by}${firstFlight ? ' · primer vuelo ' + firstFlight : ''}</div>
+          <div class="fcamo-list-sub">${st ? escHtml(st.city + ', ' + st.country) : ''} · abierto por ${escHtml(item.created_by)}${firstFlight ? ' · primer vuelo ' + escHtml(firstFlight) : ''}</div>
         </span>
-        <span class="fcamo-status-pill ${item.status}">${item.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'}</span>
+        <span class="fcamo-status-pill ${status}">${status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'}</span>
         <span class="fcamo-progress-wrap">
           <div class="fcamo-progress-bar"><div class="fcamo-progress-fill" style="width:${pct}%"></div></div>
           <div class="fcamo-progress-txt">${done}/${total}</div>
@@ -3055,13 +3065,13 @@ function renderFcamoTrashView(items){
   } else {
     html += items.map(item => {
       const st = STATIONS.find(s => s.code === item.station_code);
-      return `<div class="fcamo-list-item" data-id="${item.id}" style="cursor:default;">
-        <span class="fcamo-list-code">${item.station_code}</span>
+      return `<div class="fcamo-list-item" data-id="${Number(item.id)}" style="cursor:default;">
+        <span class="fcamo-list-code">${escHtml(item.station_code)}</span>
         <span class="fcamo-list-meta">
-          <div class="fcamo-list-reason">${st ? st.city + ', ' + st.country : ''}</div>
-          <div class="fcamo-list-sub">eliminado por ${item.deleted_by}, ${timeAgo(item.deleted_at)}</div>
+          <div class="fcamo-list-reason">${st ? escHtml(st.city + ', ' + st.country) : ''}</div>
+          <div class="fcamo-list-sub">eliminado por ${escHtml(item.deleted_by)}, ${timeAgo(item.deleted_at)}</div>
         </span>
-        <button class="fcamo-restore-btn" data-id="${item.id}">Restaurar</button>
+        <button class="fcamo-restore-btn" data-id="${Number(item.id)}">Restaurar</button>
       </div>`;
     }).join('');
   }
@@ -3128,10 +3138,11 @@ function renderFcamoForm(){
 function renderFcamoDetailView(item){
   btnNewFcamo.style.display = 'none';
   const st = STATIONS.find(s => s.code === item.station_code);
-  const types = JSON.parse(item.station_types || '[]');
-  const fleet = JSON.parse(item.fleet_scope || '[]');
-  const state = JSON.parse(item.items_state || '{}');
-  const reasonLabel = (FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason;
+  const types = fcamoSafeJson(item.station_types, []).map(String);
+  const fleet = fcamoSafeJson(item.fleet_scope, []).map(String);
+  const state = fcamoSafeJson(item.items_state, {});
+  const status = fcamoStatusOf(item);
+  const reasonLabel = escHtml((FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason);
   const onCall = types.includes('On call');
   const sections = FCAMO_SECTIONS.filter(s => !(s.hideIfOnCall && onCall));
   const { done, total, pct } = fcamoProgress(item);
@@ -3140,10 +3151,10 @@ function renderFcamoDetailView(item){
     <button class="fcamo-back" id="fcamo-detail-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Todos los F-CAMO-IBE-14</button>
     <div class="fcamo-detail-head">
       <div>
-        <div class="fcamo-detail-title"><span class="fcamo-list-code">${item.station_code}</span> ${st ? st.city + ', ' + st.country : ''}</div>
-        <div class="fcamo-detail-sub">${reasonLabel} · abierto por ${item.created_by} · ${types.join(', ') || 'sin tipo de estación indicado'}${item.company_name ? ' · ' + item.company_name : ''}${fleet.length ? ' · ' + fleet.join(', ') : ''}</div>
+        <div class="fcamo-detail-title"><span class="fcamo-list-code">${escHtml(item.station_code)}</span> ${st ? escHtml(st.city + ', ' + st.country) : ''}</div>
+        <div class="fcamo-detail-sub">${reasonLabel} · abierto por ${escHtml(item.created_by)} · ${escHtml(types.join(', ')) || 'sin tipo de estación indicado'}${item.company_name ? ' · ' + escHtml(item.company_name) : ''}${fleet.length ? ' · ' + escHtml(fleet.join(', ')) : ''}</div>
       </div>
-      <span class="fcamo-status-pill ${item.status}" id="fcamo-status-pill">${item.status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'}</span>
+      <span class="fcamo-status-pill ${status}" id="fcamo-status-pill">${status === 'completed' ? 'COMPLETADO' : 'PENDIENTE'}</span>
     </div>
     <div class="fcamo-progress-bar" style="width:100%;margin-bottom:4px;"><div class="fcamo-progress-fill" id="fcamo-detail-fill" style="width:${pct}%"></div></div>
     <div class="fcamo-progress-txt" id="fcamo-detail-progress-txt" style="text-align:left;margin-bottom:18px;">${done}/${total} completados <span class="fcamo-save-note" id="fcamo-save-note">Guardado</span></div>
@@ -3710,7 +3721,7 @@ const ICON_FCAMO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 function activityText(entry){
   if (entry.type === 'note'){
     if (entry.action === 'covered'){
-      return `<b>${entry.changed_by}</b> marcó <b>${entry.station_code}</b> como ${entry.value === 'true' ? 'cubierta' : 'pendiente'}`;
+      return `<b>${escHtml(entry.changed_by)}</b> marcó <b>${escHtml(entry.station_code)}</b> como ${entry.value === 'true' ? 'cubierta' : 'pendiente'}`;
     }
     const who = `<b>${escHtml(entry.changed_by)}</b>`, st = `<b>${escHtml(entry.station_code)}</b>`;
     const val = String(entry.value || '');
@@ -3729,7 +3740,7 @@ function activityText(entry){
     return `${who} escribió una nota en ${st}: "${cut(val, 90)}"`;
   }
   const labels = { created:'abrió un F-CAMO-IBE-14 para', completed:'completó el checklist de', reopened:'reabrió el checklist de', deleted:'eliminó el F-CAMO-IBE-14 de', restored:'restauró el F-CAMO-IBE-14 de' };
-  return `<b>${entry.changed_by}</b> ${labels[entry.action] || entry.action} <b>${entry.station_code}</b>`;
+  return `<b>${escHtml(entry.changed_by)}</b> ${escHtml(labels[entry.action] || entry.action)} <b>${escHtml(entry.station_code)}</b>`;
 }
 
 async function openActivityOverview(){
