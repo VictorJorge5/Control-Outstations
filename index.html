@@ -267,6 +267,7 @@
   .home-inner{max-width:920px;margin:0 auto;}
   .home-title{font-size:22px;font-weight:700;color:var(--ink);margin-bottom:4px;}
   .home-sub{font-size:13px;color:var(--muted);margin-bottom:26px;}
+  .home-role{font-size:12.5px;color:var(--amber);background:var(--amber-bg);border-radius:var(--radius-sm);padding:9px 12px;margin:-12px 0 20px;}
   .home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
   .home-tile{
     display:flex;align-items:center;gap:14px;text-align:left;
@@ -381,6 +382,11 @@
   .trk-sec textarea{resize:vertical;}
   .trk-btnrow{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;}
   .trk-updated{font-size:11.5px;color:var(--muted);}
+  .trk-ro{font-size:12.5px;color:var(--amber);background:var(--amber-bg);border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:14px;}
+  .trk-seg-ctl button:disabled{opacity:.45;cursor:not-allowed;}
+  .trk-seg-ctl button:disabled:hover{border-color:var(--line);color:var(--muted);}
+  .trk-seg-ctl button.on:disabled{opacity:1;cursor:default;}
+  .trk-seg-ctl button.on:disabled:hover{border-color:var(--c);color:var(--c);}
   .trk-fcamo{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 12px;font:600 12px 'IBM Plex Sans',sans-serif;color:var(--ink-2);cursor:pointer;}
   .trk-fcamo:hover{background:var(--bg-inset);}
   .trk-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;
@@ -1369,6 +1375,7 @@
     <div class="home-inner">
       <div class="home-title">Control de Estaciones</div>
       <div class="home-sub">Dirección Técnica del Operador · Outstations</div>
+      <div class="home-role" id="home-role" style="display:none;"></div>
       <div class="home-grid">
       <button type="button" class="home-tile" id="home-t-contracted">
         <span class="home-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></span>
@@ -1676,7 +1683,22 @@ window.fetch = async (input, init) => {
   } catch (e) { /* nunca romper la peticion original */ }
   return res;
 };
+// roles: admin (todo) | user (trabajo diario) | viewer (solo consulta). El servidor es quien manda;
+// esto solo decide que botones se muestran.
+function currentRole(){
+  const r = localStorage.getItem(AUTH_ROLE_KEY);
+  if (r === 'admin' || r === 'user' || r === 'viewer') return r;
+  return localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? 'admin' : 'user';
+}
+const canWrite = () => currentRole() !== 'viewer';
+const isAdminRole = () => currentRole() === 'admin';
+function storeRole(role){
+  const r = (role === 'admin' || role === 'viewer') ? role : 'user';
+  localStorage.setItem(AUTH_ROLE_KEY, r);
+  localStorage.setItem(AUTH_ADMIN_KEY, r === 'admin' ? '1' : '0');
+}
 function clearSession(){
+  localStorage.removeItem(AUTH_ROLE_KEY);
   localStorage.removeItem(AUTH_KEY);
   localStorage.removeItem(AUTH_BADGE_KEY);
   localStorage.removeItem(AUTH_ADMIN_KEY);
@@ -1695,6 +1717,7 @@ const AUTH_KEY = 'ib_control_estaciones_auth';
 const AUTH_BADGE_KEY = 'ib_control_estaciones_badge';
 const AUTH_ADMIN_KEY = 'ib_control_estaciones_admin';
 const AUTH_EMAIL_KEY = 'ib_control_estaciones_email';
+const AUTH_ROLE_KEY = 'ib_control_estaciones_role';
 
 function updateDataBadge(){
   const show = localStorage.getItem(AUTH_BADGE_KEY) === '1';
@@ -1728,13 +1751,38 @@ const resetPass2 = document.getElementById('reset-pass2');
 const resetError = document.getElementById('reset-error');
 const loginLoading = document.getElementById('login-loading');
 
+function applyRoleUI(){
+  const role = currentRole();
+  appEl.dataset.role = role;
+  const admin = role === 'admin';
+  const usersBtn = document.getElementById('open-users-panel');
+  if (usersBtn) usersBtn.style.display = admin ? '' : 'none';
+  const usersTile = document.getElementById('home-t-users');
+  if (usersTile) usersTile.style.display = admin ? '' : 'none';
+  const note = document.getElementById('home-role');
+  if (note){
+    note.textContent = role === 'viewer' ? 'Tu acceso es de solo consulta: puedes verlo todo, pero no modificar datos.' : '';
+    note.style.display = role === 'viewer' ? '' : 'none';
+  }
+}
+// pregunta al servidor el rol actual (por si un administrador lo ha cambiado) y ajusta la pantalla
+async function refreshMe(){
+  try {
+    const res = await fetch(`${AUTH_API_URL}/api/me`, { headers: { 'Authorization': `Bearer ${localStorage.getItem(AUTH_KEY)}` } });
+    if (!res.ok) return;
+    const data = await res.json();
+    const before = currentRole();
+    storeRole(data.role);
+    applyRoleUI();
+    if (before !== currentRole() && typeof trkRender === 'function' && TRK.active) trkRender();
+  } catch (e) { /* sin conexion: se queda con el rol guardado */ }
+}
+
 function showApp(){
   loginOverlay.style.display = 'none';
   appEl.classList.add('visible');
-  const usersBtn = document.getElementById('open-users-panel');
-  if (usersBtn) usersBtn.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
-  const usersTile = document.getElementById('home-t-users');
-  if (usersTile) usersTile.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
+  applyRoleUI();
+  refreshMe();
   applyRoute();
 }
 
@@ -1878,7 +1926,7 @@ loginForm.addEventListener('submit', async (e) => {
     if (res.ok && data.token){
       localStorage.setItem(AUTH_KEY, data.token);
       localStorage.setItem(AUTH_BADGE_KEY, data.show_data_badge ? '1' : '0');
-      localStorage.setItem(AUTH_ADMIN_KEY, data.is_admin ? '1' : '0');
+      storeRole(data.role || (data.is_admin ? 'admin' : 'user'));
       localStorage.setItem(AUTH_EMAIL_KEY, data.email || '');
       updateDataBadge();
       loadAppAndShow();
@@ -1938,7 +1986,7 @@ changeForm.addEventListener('submit', async (e) => {
       changeCurrent.value = ''; changePass1.value = ''; changePass2.value = '';
       localStorage.setItem(AUTH_KEY, data.token);
       localStorage.setItem(AUTH_BADGE_KEY, data.show_data_badge ? '1' : '0');
-      localStorage.setItem(AUTH_ADMIN_KEY, data.is_admin ? '1' : '0');
+      storeRole(data.role || (data.is_admin ? 'admin' : 'user'));
       localStorage.setItem(AUTH_EMAIL_KEY, data.email || '');
       if (wasForced){ updateDataBadge(); loadAppAndShow(); }
       else {
@@ -2971,8 +3019,8 @@ async function fcamoApi(path, options){
 }
 
 async function openFcamoOverview(){
-  btnNewFcamo.style.display = '';
-  btnFcamoTrash.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
+  btnNewFcamo.style.display = canWrite() ? '' : 'none';
+  btnFcamoTrash.style.display = isAdminRole() ? '' : 'none';
   fcamoShowCompleted = false;
   fcamoOverviewBody.innerHTML = '<div class="no-data">Cargando…</div>';
   fcamoOverviewOverlay.classList.add('open');
@@ -2988,8 +3036,8 @@ function closeFcamoOverview(){
 }
 
 function renderFcamoListView(items){
-  btnNewFcamo.style.display = '';
-  btnFcamoTrash.style.display = localStorage.getItem(AUTH_ADMIN_KEY) === '1' ? '' : 'none';
+  btnNewFcamo.style.display = canWrite() ? '' : 'none';
+  btnFcamoTrash.style.display = isAdminRole() ? '' : 'none';
   updateFcamoPendingBadge(items);
   if (!items.length){
     fcamoOverviewBody.innerHTML = '<div class="no-data">Todavía no hay ningún F-CAMO-IBE-14 abierto. Pulsa "Nuevo F-CAMO-IBE-14" para empezar uno.</div>';
@@ -3142,6 +3190,7 @@ function renderFcamoDetailView(item){
   const fleet = fcamoSafeJson(item.fleet_scope, []).map(String);
   const state = fcamoSafeJson(item.items_state, {});
   const status = fcamoStatusOf(item);
+  const writable = canWrite(), canDelete = isAdminRole();
   const reasonLabel = escHtml((FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason);
   const onCall = types.includes('On call');
   const sections = FCAMO_SECTIONS.filter(s => !(s.hideIfOnCall && onCall));
@@ -3160,9 +3209,10 @@ function renderFcamoDetailView(item){
     <div class="fcamo-progress-txt" id="fcamo-detail-progress-txt" style="text-align:left;margin-bottom:18px;">${done}/${total} completados <span class="fcamo-save-note" id="fcamo-save-note">Guardado</span></div>
     ${sections.map(sec => `
       <div class="fcamo-section-title">${sec.label}</div>
-      ${sec.items.map(it => `<label class="fcamo-checkrow"><input type="checkbox" class="fcamo-item-check" data-id="${it.id}" ${state[it.id] ? 'checked' : ''}>${it.label}</label>`).join('')}
+      ${sec.items.map(it => `<label class="fcamo-checkrow"><input type="checkbox" class="fcamo-item-check" data-id="${it.id}" ${state[it.id] ? 'checked' : ''} ${writable ? '' : 'disabled'}>${it.label}</label>`).join('')}
     `).join('')}
-    <button class="fcamo-delete-btn" id="fcamo-delete-btn" style="margin-top:18px;">Eliminar este F-CAMO-IBE-14</button>
+    ${canDelete ? '<button class="fcamo-delete-btn" id="fcamo-delete-btn" style="margin-top:18px;">Eliminar este F-CAMO-IBE-14</button>' : ''}
+    ${writable ? '' : '<div style="margin-top:14px;font-size:12px;color:var(--amber);">Solo consulta: no puedes modificar este checklist.</div>'}
   `;
 
   document.getElementById('fcamo-detail-back').addEventListener('click', openFcamoOverview);
@@ -3196,7 +3246,8 @@ function renderFcamoDetailView(item){
       scheduleSave({ items_state: state, status: newStatus });
     });
   });
-  document.getElementById('fcamo-delete-btn').addEventListener('click', async () => {
+  const deleteBtn = document.getElementById('fcamo-delete-btn');
+  if (deleteBtn) deleteBtn.addEventListener('click', async () => {
     if (!confirm('¿Seguro que quieres eliminar este F-CAMO-IBE-14? No se puede deshacer.')) return;
     try {
       await fcamoApi(`/${item.id}`, { method:'DELETE' });
@@ -3503,6 +3554,7 @@ function trkRender(){
 function trkProviderHtml(r){
   const state = r.cand ? trkCandState(r.cand.status) : 'identified';
   const chosen = state === 'selected';
+  const ro = !canWrite();
   const contact = [r.email, r.phone].filter(Boolean).map(escHtml).join(' · ');
   const key = escHtml(r.name);
   return `<div class="trk-prov ${chosen ? 'is-chosen' : ''}">
@@ -3511,13 +3563,13 @@ function trkProviderHtml(r){
       ${contact ? `<div class="trk-prov-contact">${contact}</div>` : (r.orphan ? '<div class="trk-prov-contact">Fuera del listado de proveedores no contratados</div>' : '')}
     </div>
     <label class="trk-contacted ${chosen ? 'is-locked' : ''}">
-      <input type="checkbox" data-act="contacted" data-name="${key}" ${state !== 'identified' ? 'checked' : ''} ${chosen ? 'disabled' : ''}>
+      <input type="checkbox" data-act="contacted" data-name="${key}" ${state !== 'identified' ? 'checked' : ''} ${(chosen || ro) ? 'disabled' : ''}>
       Contactado
     </label>
-    ${chosen
+    ${ro ? '' : (chosen
       ? `<button type="button" class="trk-btn" data-act="unchoose" data-name="${key}">Quitar elección</button>`
-      : `<button type="button" class="trk-btn choose" data-act="choose" data-name="${key}">Elegir</button>`}
-    ${r.orphan && r.cand ? `<button type="button" class="trk-x" data-act="remove" data-name="${key}" title="Quitar de la lista" aria-label="Quitar ${key} de la lista">✕</button>` : ''}
+      : `<button type="button" class="trk-btn choose" data-act="choose" data-name="${key}">Elegir</button>`)}
+    ${!ro && r.orphan && r.cand ? `<button type="button" class="trk-x" data-act="remove" data-name="${key}" title="Quitar de la lista" aria-label="Quitar ${key} de la lista">✕</button>` : ''}
   </div>`;
 }
 
@@ -3529,9 +3581,12 @@ function trkDetailHtml(code){
   const fc = TRK.fcamo[code];
   const def = TRK_STAGES.find(s => s.v === stage);
   const contactedNames = sum.contacted.map(c => escHtml(c.name)).join(', ');
+  const ro = !canWrite();            // consulta: solo ver
+  const adm = isAdminRole();         // solo un administrador cierra o reabre una estacion ("Cubierta")
 
   return `
   <button type="button" class="trk-back" data-act="back">← Todas las estaciones</button>
+  ${ro ? '<div class="trk-ro">Solo consulta: puedes ver el seguimiento, pero no modificarlo.</div>' : ''}
   <div class="trk-dhead">
     <span class="trk-code big">${code}</span>
     <div>
@@ -3549,24 +3604,29 @@ function trkDetailHtml(code){
   <section class="trk-sec">
     <h3>Estado de la estación</h3>
     <div class="trk-seg-ctl" role="group" aria-label="Estado de la estación">
-      ${TRK_STAGES.map(s => `<button type="button" class="trk-st-${s.v} ${s.v === stage ? 'on' : ''}" data-act="stage" data-v="${s.v}">${escHtml(s.label)}</button>`).join('')}
+      ${TRK_STAGES.map(s => {
+        const adminOnly = (s.v === 'covered' || stage === 'covered') && s.v !== stage; // cerrar o reabrir
+        const blocked = ro || (adminOnly && !adm);
+        const why = ro ? 'Solo consulta' : (blocked ? 'Solo los administradores pueden cerrar o reabrir una estación' : '');
+        return `<button type="button" class="trk-st-${s.v} ${s.v === stage ? 'on' : ''}" data-act="stage" data-v="${s.v}" ${blocked ? `disabled title="${why}"` : ''}>${escHtml(s.label)}</button>`;
+      }).join('')}
     </div>
-    <p class="trk-hint">${escHtml(def.hint)} <span>Cambia solo al marcar contactados o elegir; «Provisional» y «Cubierta» las marcas tú.</span></p>
+    <p class="trk-hint">${escHtml(def.hint)} <span>${ro ? '' : (adm ? 'Cambia solo al marcar contactados o elegir; «Provisional» y «Cubierta» las marcas tú.' : 'Cambia solo al marcar contactados o elegir; «Provisional» la marcas tú y «Cubierta» la marca un administrador.')}</span></p>
   </section>
 
   <section class="trk-sec">
     <h3>Proveedores que pueden cubrirla <span class="trk-count">${rows.length}</span></h3>
     ${rows.length ? rows.map(trkProviderHtml).join('') : '<div class="trk-empty small">No hay proveedores en el listado para esta estación. Puedes apuntar uno abajo.</div>'}
-    <div class="trk-add">
+    ${ro ? '' : `<div class="trk-add">
       <input type="text" id="trk-add-name" data-keep placeholder="¿Otro proveedor que pueda cubrirla? Escribe su nombre…" maxlength="120" autocomplete="off">
       <button type="button" class="trk-btn primary" data-act="add">Añadir</button>
-    </div>
+    </div>`}
   </section>
 
   <section class="trk-sec">
     <h3>Notas</h3>
-    <textarea id="trk-note" data-keep rows="4" maxlength="2000" placeholder="Cualquier cosa que convenga recordar de esta estación…">${escHtml(note.note || '')}</textarea>
-    <div class="trk-btnrow"><button type="button" class="trk-btn primary" data-act="save-note">Guardar notas</button>
+    <textarea id="trk-note" data-keep rows="4" maxlength="2000" ${ro ? 'readonly' : ''} placeholder="${ro ? '' : 'Cualquier cosa que convenga recordar de esta estación…'}">${escHtml(note.note || '')}</textarea>
+    <div class="trk-btnrow">${ro ? '' : '<button type="button" class="trk-btn primary" data-act="save-note">Guardar notas</button>'}
       <span class="trk-updated">${note.updated_at ? `Última actualización ${timeAgo(note.updated_at)} · ${escHtml(trkWho(note.updated_by))}` : ''}</span></div>
   </section>
 
@@ -3665,10 +3725,12 @@ function trkSetProvider(code, name, status){
     if (act === 'back'){ trkClose(); return; }
     if (act === 'fcamo-open'){ openFcamoDetailById(parseInt(el.dataset.id, 10)); return; }
     if (!code) return;
+    if (!canWrite()){ trkToast('Tu usuario es de solo consulta.', true); return; }
 
     if (act === 'stage'){
       const v = el.dataset.v;
       if (v === trkStageOf(code)) return;
+      if ((v === 'covered' || trkStageOf(code) === 'covered') && !isAdminRole()){ trkToast('Solo los administradores pueden cerrar o reabrir una estación.', true); return; }
       if (v === 'covered' && !confirm(`¿Marcar ${code} como cubierta? Saldrá de la lista (podrás verla en el filtro «Cubiertas»).`)) return;
       trkMutate(code, () => trkApi(`/${code}`, { method:'PATCH', body: JSON.stringify({ stage:v }) }));
     } else if (act === 'choose'){
@@ -3697,6 +3759,7 @@ function trkSetProvider(code, name, status){
   root.addEventListener('change', e => {
     const el = e.target.closest('input[data-act="contacted"]');
     if (!el || !TRK.code) return;
+    if (!canWrite()){ el.checked = !el.checked; return; }
     trkSetProvider(TRK.code, el.dataset.name, el.checked ? 'contacted' : 'identified');
   });
 
@@ -3785,8 +3848,12 @@ function escHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+const ROLE_LABELS = { admin:'Administrador', user:'Usuario', viewer:'Consulta' };
+const roleName = r => ROLE_LABELS[r] || 'Usuario';
+
 const AUDIT_TEXT = {
-  created:                 (t, d) => `dio de alta a <b>${t}</b>${d === 'admin' ? ' como administrador' : ''}`,
+  created:                 (t, d) => `dio de alta a <b>${t}</b>${ROLE_LABELS[d] ? ' con el rol <b>' + ROLE_LABELS[d] + '</b>' : ''}`,
+  role_changed:            (t, d) => { const [from, to] = String(d || '').split('>'); return `cambió el rol de <b>${t}</b>${ROLE_LABELS[from] ? ' de ' + ROLE_LABELS[from] : ''} a <b>${roleName(to)}</b>`; },
   made_admin:              t => `dio permisos de administrador a <b>${t}</b>`,
   removed_admin:           t => `quitó los permisos de administrador a <b>${t}</b>`,
   badge_on:                t => `activó el aviso de datos a <b>${t}</b>`,
@@ -3853,10 +3920,9 @@ function renderUsersListView(items){
       <span class="fcamo-list-meta" style="flex:1;">
         <div class="fcamo-list-sub">Alta ${new Date(u.created_at * 1000).toLocaleDateString('es-ES')}${u.updated_at ? ' · última actualización ' + timeAgo(u.updated_at) : ''}${u.must_change_password ? ' · <b style="color:var(--amber);">pendiente de elegir contraseña</b>' : ''}</div>
       </span>
-      <label class="switch-row" style="margin:0;width:auto;">
-        <span class="switch"><input type="checkbox" class="user-toggle-admin" data-email="${escHtml(u.email)}" ${u.is_admin ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
-        <span class="label-text">Admin</span>
-      </label>
+      <select class="user-role-select" data-email="${escHtml(u.email)}" aria-label="Rol de ${escHtml(u.email)}" ${u.email === me ? 'disabled title="No puedes cambiar tu propio rol"' : ''} style="padding:7px 9px;border:1px solid var(--line);border-radius:var(--radius-sm);font:600 12px 'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--ink);">
+        ${['admin', 'user', 'viewer'].map(r => `<option value="${r}" ${(u.role || (u.is_admin ? 'admin' : 'user')) === r ? 'selected' : ''}>${ROLE_LABELS[r]}</option>`).join('')}
+      </select>
       <label class="switch-row" style="margin:0;width:auto;">
         <span class="switch"><input type="checkbox" class="user-toggle-badge" data-email="${escHtml(u.email)}" ${u.show_data_badge ? 'checked' : ''}><span class="track"></span><span class="thumb"></span></span>
         <span class="label-text">Aviso datos</span>
@@ -3865,14 +3931,15 @@ function renderUsersListView(items){
       <button type="button" class="fcamo-delete-btn user-delete-btn" data-email="${escHtml(u.email)}" ${u.email === me ? 'disabled style="opacity:.35;cursor:not-allowed;"' : ''}>Eliminar</button>
     </div>`).join('');
 
-  usersBody.querySelectorAll('.user-toggle-admin').forEach(cb => {
-    cb.addEventListener('change', async () => {
-      const wasChecked = !cb.checked;
+  usersBody.querySelectorAll('.user-role-select').forEach(sel => {
+    const previous = sel.value;
+    sel.addEventListener('change', async () => {
       try {
-        await usersApi(`/${encodeURIComponent(cb.dataset.email)}`, { method:'PATCH', body: JSON.stringify({ is_admin: cb.checked }) });
+        await usersApi(`/${encodeURIComponent(sel.dataset.email)}`, { method:'PATCH', body: JSON.stringify({ role: sel.value }) });
+        openUsersPanel(); // se recarga la lista para mostrar lo que ha guardado el servidor
       } catch (err){
-        cb.checked = wasChecked;
-        alert('No se ha podido cambiar: ' + err.message);
+        sel.value = previous;
+        alert('No se ha podido cambiar el rol: ' + err.message);
       }
     });
   });
@@ -3922,17 +3989,25 @@ function renderNewUserForm(){
     <div class="fcamo-form-grid">
       <div class="fcamo-form-field"><label>Email @iberia.es</label><input type="text" id="user-f-email" placeholder="nombre.apellido@iberia.es"></div>
     </div>
-    <label class="fcamo-checkrow"><input type="checkbox" id="user-f-admin">Permisos de administrador</label>
+    <div class="fcamo-form-grid">
+      <div class="fcamo-form-field"><label>Rol</label>
+        <select id="user-f-role">
+          <option value="user">Usuario — trabajo diario: F-CAMO y seguimiento</option>
+          <option value="viewer">Consulta — puede verlo todo, no modificar nada</option>
+          <option value="admin">Administrador — además gestiona usuarios y datos</option>
+        </select>
+      </div>
+    </div>
     <label class="fcamo-checkrow"><input type="checkbox" id="user-f-badge">Ve el aviso de "datos actualizados"</label>
     <button class="login-btn" id="user-f-submit" style="margin-top:20px;width:auto;padding:11px 22px;">Crear usuario</button>
   `;
   document.getElementById('user-form-back').addEventListener('click', openUsersPanel);
   document.getElementById('user-f-submit').addEventListener('click', async () => {
     const emailVal = document.getElementById('user-f-email').value.trim().toLowerCase();
-    const is_admin = document.getElementById('user-f-admin').checked;
+    const role = document.getElementById('user-f-role').value;
     const show_data_badge = document.getElementById('user-f-badge').checked;
     try {
-      const { temp_password } = await usersApi('', { method:'POST', body: JSON.stringify({ email: emailVal, is_admin, show_data_badge }) });
+      const { temp_password } = await usersApi('', { method:'POST', body: JSON.stringify({ email: emailVal, role, show_data_badge }) });
       alert(`Usuario creado. Contraseña temporal para ${emailVal} (cópiala y pásasela; no se volverá a mostrar). Al entrar tendrá que elegir una propia:\n\n${temp_password}`);
       openUsersPanel();
     } catch (err){
@@ -3980,9 +4055,10 @@ function renderHomeStats(){
   }
 
   if (hd.users){
-    const admins = hd.users.filter(u => u.is_admin).length;
+    const count = r => hd.users.filter(u => (u.role || (u.is_admin ? 'admin' : 'user')) === r).length;
+    const admins = count('admin'), viewers = count('viewer');
     set('home-c-users', hd.users.length);
-    set('home-s-users', `${admins} administrador${admins === 1 ? '' : 'es'}`);
+    set('home-s-users', `${admins} administrador${admins === 1 ? '' : 'es'}` + (viewers ? ` · ${viewers} de consulta` : ''));
   }
 
   if (hd.activity){
@@ -4002,7 +4078,7 @@ async function refreshHomeExtras(){
       .then(d => { if (d){ window.homeData.activity = d.items; renderHomeStats(); } })
       .catch(() => {})
   );
-  if (localStorage.getItem(AUTH_ADMIN_KEY) === '1'){
+  if (isAdminRole()){
     tasks.push(
       usersApi('', { method: 'GET' })
         .then(d => { window.homeData.users = d.items; renderHomeStats(); })
