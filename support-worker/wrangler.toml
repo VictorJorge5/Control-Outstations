@@ -1,0 +1,21 @@
+# Backend del chatbot de soporte. Desplegar:  cd support-worker && npx wrangler deploy
+name = "outstations-support"
+main = "src/index.js"
+# Revisa en el panel de Cloudflare (Worker > Settings > Runtime) la fecha que tiene hoy y ponla aqui
+compatibility_date = "2026-09-04"
+keep_vars = true
+
+[ai]
+binding = "AI"
+
+# Limites de peticiones (Workers Rate Limiting). period solo admite 10 o 60 segundos.
+# namespace_id es un numero que eliges tu, unico dentro de la cuenta.
+[[ratelimits]]
+name = "PER_IP_LIMITER"
+namespace_id = "1001"
+simple = { limit = 6, period = 60 }
+
+[[ratelimits]]
+name = "GLOBAL_LIMITER"
+namespace_id = "1002"
+simple = { limit = 30, period = 60 }

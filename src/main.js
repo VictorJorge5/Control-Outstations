@@ -254,7 +254,8 @@ async function loadAppAndShow(){
   loginOverlay.style.display = 'flex';
   const token = localStorage.getItem(AUTH_KEY);
   try {
-    const res = await fetch(`${AUTH_API_URL}/api/data`, {
+    // lite=1: sin horarios ni pernoctas por dia (se piden al abrir cada ficha); un Worker antiguo lo ignora
+    const res = await fetch(`${AUTH_API_URL}/api/data?lite=1`, {
       headers: { 'Authorization': `Bearer ${token}` },
     });
     const data = await res.json();

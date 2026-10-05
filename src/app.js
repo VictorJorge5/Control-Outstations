@@ -571,10 +571,10 @@ function renderPernoctaTab(s){
     return;
   }
   tabPernocta.innerHTML = pernoctaMatrixHtml([s]);
-  bindPmatrixCells(tabPernocta, (code, monthKey) => {
+  bindPmatrixCells(tabPernocta, (code, monthKey) => withStationDetails(s, () => {
     tabPernocta.innerHTML = pcalBackHtml('Volver al resumen mensual') + pcalTitleHtml(s, monthKey) + pernoctaCalendarHtml(s, monthKey);
     tabPernocta.querySelector('.pcal-back').addEventListener('click', () => renderPernoctaTab(s));
-  });
+  }));
 }
 
 function renderAltProvidersTab(s){
@@ -690,9 +690,45 @@ function renderOverviewTab(s){
   if (seeAllBtn) seeAllBtn.addEventListener('click', () => switchTab('contacts'));
 }
 
+// ---- detalle pesado de cada estacion (horario y pernoctas dia a dia): /api/data?lite=1 no lo trae
+// y se pide al Worker la primera vez que hace falta. Con un Worker antiguo ya viene en /api/data. ----
+const stationDetailsPending = {};
+function ensureStationDetails(s){
+  if (s.schedule) return Promise.resolve(s);
+  if (!stationDetailsPending[s.code]){
+    stationDetailsPending[s.code] = (async () => {
+      const res = await fetch(`${AUTH_API_URL}/api/station/${encodeURIComponent(s.code)}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem(AUTH_KEY)}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se ha podido cargar el horario de la estación');
+      s.schedule = data.schedule || [];
+      s.pernocta_by_date = data.pernocta_by_date || {};
+      return s;
+    })().finally(() => { delete stationDetailsPending[s.code]; });
+  }
+  return stationDetailsPending[s.code];
+}
+// ejecuta fn(s) cuando la estacion ya tiene su detalle; si falla, avisa sin romper la pantalla
+async function withStationDetails(s, fn){
+  document.body.classList.add('loading-details');
+  try {
+    await ensureStationDetails(s);
+  } catch (err){
+    trkToast(err.message, true);
+    return;
+  } finally {
+    document.body.classList.remove('loading-details');
+  }
+  fn(s);
+}
+
 function openSchedule(code){
   const s = STATIONS.find(x => x.code === code);
   if (!s) return;
+  withStationDetails(s, showSchedule);
+}
+function showSchedule(s){
   currentSchedStation = s;
   modalCode.textContent = s.code;
   modalCity.textContent = `${s.city}, ${s.country}`;
@@ -844,8 +880,10 @@ function renderPernoctaMatrix(){
   pernoctaOverviewBody.innerHTML = pernoctaMatrixHtml(withPernocta);
   bindPmatrixCells(pernoctaOverviewBody, (code, monthKey) => {
     const s = STATIONS.find(x => x.code === code);
-    pernoctaOverviewBody.innerHTML = pcalBackHtml('Todas las estaciones') + pcalTitleHtml(s, monthKey) + pernoctaCalendarHtml(s, monthKey);
-    pernoctaOverviewBody.querySelector('.pcal-back').addEventListener('click', renderPernoctaMatrix);
+    withStationDetails(s, () => {
+      pernoctaOverviewBody.innerHTML = pcalBackHtml('Todas las estaciones') + pcalTitleHtml(s, monthKey) + pernoctaCalendarHtml(s, monthKey);
+      pernoctaOverviewBody.querySelector('.pcal-back').addEventListener('click', renderPernoctaMatrix);
+    });
   });
 }
 
@@ -1001,7 +1039,7 @@ function renderFcamoListView(items){
       const st = STATIONS.find(s => s.code === item.station_code);
       const { done, total, pct } = fcamoProgress(item);
       const reasonLabel = escHtml((FCAMO_REASONS.find(r => r.value === item.reason) || {}).label || item.reason);
-      const firstFlight = (st && st.schedule && st.schedule.length) ? st.schedule[0][0] : null;
+      const firstFlight = !st ? null : (st.schedule && st.schedule.length) ? st.schedule[0][0] : (st.first_flight || null);
       const status = fcamoStatusOf(item);
       return `<div class="fcamo-list-item" data-id="${Number(item.id)}">
         <span class="fcamo-list-code">${escHtml(item.station_code)}</span>
@@ -1308,6 +1346,8 @@ function trkFlight(code){
       const d = parseDateStr(r[0]);
       if (!isNaN(d) && (!first || d < first)) first = d;
     }
+  } else if (s && s.first_flight){
+    first = parseDateStr(s.first_flight); // version lite de /api/data: el Worker ya lo trae calculado
   }
   const t = trkToday();
   const days = first ? Math.round((first.getTime() - Date.UTC(t.getFullYear(), t.getMonth(), t.getDate())) / 86400000) : null;

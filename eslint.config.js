@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default [
-  { ignores: ['dist/', 'node_modules/'] },
+  { ignores: ['dist/', 'node_modules/', 'playwright-report/', 'test-results/'] },
   js.configs.recommended,
   {
     files: ['src/**/*.js'],
@@ -16,7 +16,7 @@ export default [
     },
   },
   {
-    files: ['worker/**/*.js'],
+    files: ['worker/**/*.js', 'support-worker/**/*.js'],
     languageOptions: { globals: globals.serviceworker },
     rules: {
       'no-unused-vars': ['warn', { caughtErrors: 'none' }],
@@ -24,7 +24,8 @@ export default [
     },
   },
   {
-    files: ['*.config.js'],
-    languageOptions: { globals: globals.node },
+    files: ['*.config.js', '*/test/**/*.js', 'tests/**/*.js'],
+    // los tests e2e tambien llevan codigo que corre en el navegador (page.evaluate)
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 ];

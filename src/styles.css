@@ -1273,3 +1273,6 @@ select:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px var(--red
   .logout-btn{flex-shrink:0;white-space:nowrap;padding:6px 8px;font-size:10.5px;}
   .pw-btn{margin-left:0;}
 }
+
+/* mientras se pide el horario de una estacion al Worker */
+body.loading-details, body.loading-details *{cursor:progress !important;}

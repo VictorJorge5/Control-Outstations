@@ -7,6 +7,8 @@
  *   POST /api/reset-password   { token, password }        -> { ok: true }
  *   POST /api/change-password  { current_password, new_password } -> { token, ... }  (voluntario u obligatorio tras una temporal)
  *   GET  /api/health                                       -> { ok: true }
+ *   GET  /api/data[?lite=1]    -> { stations, alt_stations, pernocta_months }  (lite: sin horario ni pernoctas por dia)
+ *   GET  /api/station/:code    -> { code, schedule, pernocta_by_date }  (lo que lite deja fuera, al abrir una ficha)
  *   ---- seguimiento de estaciones sin proveedor (cualquier usuario con sesion) ----
  *   GET    /api/tracking                          -> { notes, candidates }
  *   PATCH  /api/tracking/:code                    { stage?, note? }
@@ -28,6 +30,8 @@
  *   FROM_EMAIL      -> var, direccion verificada como "Single Sender" en SendGrid (solo el email, sin nombre)
  *   ALLOWED_ORIGIN  -> var, origen(es) permitido(s) para CORS, separados por comas
  *                      (ej. https://tuusuario.github.io,https://control-outstations.vercel.app)
+ *   ALLOWED_ORIGIN_PATTERN -> var opcional, expresion regular para las URLs de preview de Vercel
+ *                      (ej. ^https://control-outstations-[a-z0-9-]+-victorjorge5s-projects\.vercel\.app$)
  *   APP_URL         -> var, URL publica de la app (para construir el link de reseteo)
  */
 
@@ -71,7 +75,16 @@ function allowedOrigins(env) {
 function allowedOrigin(env) {
   const list = allowedOrigins(env);
   if (env.REQUEST_ORIGIN && list.includes(env.REQUEST_ORIGIN)) return env.REQUEST_ORIGIN;
+  if (env.REQUEST_ORIGIN && env.ALLOWED_ORIGIN_PATTERN && matchesPattern(env.ALLOWED_ORIGIN_PATTERN, env.REQUEST_ORIGIN)) {
+    return env.REQUEST_ORIGIN;
+  }
   return list[0] || 'null';
+}
+
+// el patron debe ir anclado (^...$) y solo se aplica a origenes https; si esta mal escrito no permite nada
+function matchesPattern(pattern, origin) {
+  if (!pattern.startsWith('^') || !pattern.endsWith('$') || !origin.startsWith('https://')) return false;
+  try { return new RegExp(pattern).test(origin); } catch { return false; }
 }
 
 function corsHeaders(env) {
@@ -239,6 +252,28 @@ async function sendResetEmail(env, email, resetUrl) {
       }],
     }),
   });
+}
+
+// ---- version ligera de /api/data: el horario y las pernoctas dia a dia son ~95% del peso (unos 3,6 MB)
+// y solo hacen falta al abrir la ficha de una estacion, asi que se sirven aparte por /api/station/:code ----
+const HEAVY_STATION_FIELDS = ['schedule', 'pernocta_by_date'];
+const MONTHS_EN = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+// primer vuelo del horario (fechas "15/SEP/2026"), en el mismo formato, o null si no hay
+function firstFlightOf(schedule) {
+  let best = null, bestTime = Infinity;
+  for (const r of schedule || []) {
+    const [dd, mon, yyyy] = String(r && r[0]).split('/');
+    const t = Date.UTC(parseInt(yyyy, 10), MONTHS_EN.indexOf(mon), parseInt(dd, 10));
+    if (!isNaN(t) && t < bestTime) { bestTime = t; best = r[0]; }
+  }
+  return best;
+}
+
+function liteStation(s) {
+  const out = { ...s, first_flight: firstFlightOf(s.schedule) };
+  for (const k of HEAVY_STATION_FIELDS) delete out[k];
+  return out;
 }
 
 // ---- validacion de los datos de F-CAMO: se acepta solo lo que la app puede enviar (mantener en sintonia con el HTML) ----
@@ -532,7 +567,8 @@ async function handleRequest(request, env) {
 
       if (request.method === 'GET' && id) {
         const row = await env.DB.prepare('SELECT * FROM fcamo_checklists WHERE id = ?').bind(id).first();
-        if (!row) return json({ error: 'No encontrado' }, 404, env);
+        // los borrados solo los ve un administrador (desde la papelera)
+        if (!row || (row.deleted && !(await isAdmin()))) return json({ error: 'No encontrado' }, 404, env);
         return json({ item: row }, 200, env);
       }
 
@@ -644,11 +680,30 @@ async function handleRequest(request, env) {
         env.DB.prepare('SELECT data FROM alt_station_full').all(),
         env.DB.prepare("SELECT value FROM app_meta WHERE key = 'pernocta_months'").first(),
       ]);
-      const stations = stationsRes.results.map(r => JSON.parse(r.data));
+      const lite = url.searchParams.get('lite') === '1';
+      const stations = stationsRes.results.map(r => {
+        const s = JSON.parse(r.data);
+        return lite ? liteStation(s) : s;
+      });
       const altStations = altRes.results.map(r => JSON.parse(r.data));
       const pernoctaMonths = metaRow ? JSON.parse(metaRow.value) : [];
 
       return json({ stations, alt_stations: altStations, pernocta_months: pernoctaMonths }, 200, env);
+    }
+
+    // ---- detalle pesado de una estacion (horario y pernoctas por dia), para la version lite de /api/data ----
+    if (url.pathname.startsWith('/api/station/') && request.method === 'GET') {
+      const authHeader = request.headers.get('Authorization') || '';
+      const token = authHeader.replace(/^Bearer\s+/i, '');
+      const email = await verifySessionToken(token, env);
+      if (!email) return json({ error: 'No autorizado' }, 401, env);
+
+      const code = decodeURIComponent(url.pathname.slice('/api/station/'.length)).toUpperCase();
+      if (!/^[A-Z0-9]{3,4}$/.test(code)) return json({ error: 'Estación no válida' }, 400, env);
+      const row = await env.DB.prepare('SELECT data FROM station_full WHERE code = ?').bind(code).first();
+      if (!row) return json({ error: 'Estación no encontrada' }, 404, env);
+      const s = JSON.parse(row.data);
+      return json({ code, schedule: s.schedule || [], pernocta_by_date: s.pernocta_by_date || {} }, 200, env);
     }
 
     // ---- carga/actualizacion de los datos de estaciones y proveedores: SOLO administradores ----

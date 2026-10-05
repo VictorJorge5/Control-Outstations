@@ -1,0 +1,36 @@
+# Despliega los Workers de Cloudflare cuando cambian en main (o a mano desde Actions).
+# Necesita el secreto CLOUDFLARE_API_TOKEN (plantilla "Edit Cloudflare Workers") y la
+# variable CLOUDFLARE_ACCOUNT_ID en Settings > Secrets and variables > Actions.
+name: Deploy Workers
+
+on:
+  push:
+    branches: [main]
+    paths: ['worker/**', 'support-worker/**']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: [worker, support-worker]
+    env:
+      HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - if: env.HAS_TOKEN != 'true'
+        run: echo "::warning::Falta el secreto CLOUDFLARE_API_TOKEN; no se despliega ${{ matrix.dir }}."
+      - uses: actions/setup-node@v4
+        if: env.HAS_TOKEN == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - if: env.HAS_TOKEN == 'true'
+        run: npm ci && npm run test:worker
+      - uses: cloudflare/wrangler-action@v3
+        if: env.HAS_TOKEN == 'true'
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: ${{ matrix.dir }}
