@@ -84,7 +84,10 @@ Si cambias la URL del Worker, actualiza también `connect-src` en la CSP de
 3. **CORS:** `ALLOWED_ORIGIN` (GitHub Pages + Vercel) y `ALLOWED_ORIGIN_PATTERN`
    (previews de Vercel) están en `[vars]` de `worker/wrangler.toml` y se aplican
    en cada despliegue.
-4. Probar en Vercel. Cuando todo funcione, poner `APP_URL` al dominio de Vercel
+4. **GitHub Pages (transición):** la app antigua está en `docs/index.html` y
+   GitHub Pages la sirve desde *Settings → Pages → Branch `main` / `/docs`*,
+   así que los enlaces de siempre siguen funcionando mientras tanto.
+5. Probar en Vercel. Cuando todo funcione, poner `APP_URL` al dominio de Vercel
    (panel de Cloudflare), quitar GitHub Pages de `ALLOWED_ORIGIN` en
    `worker/wrangler.toml` y desactivar GitHub Pages.
 
