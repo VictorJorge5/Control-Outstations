@@ -16,6 +16,14 @@ export default [
     },
   },
   {
+    files: ['worker/**/*.js'],
+    languageOptions: { globals: globals.serviceworker },
+    rules: {
+      'no-unused-vars': ['warn', { caughtErrors: 'none' }],
+      'no-useless-escape': 'warn',
+    },
+  },
+  {
     files: ['*.config.js'],
     languageOptions: { globals: globals.node },
   },

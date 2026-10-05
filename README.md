@@ -1,8 +1,9 @@
 # Control de Estaciones · Outstations DTO
 
-Front-end de la app de control de estaciones. Es una app Vite (HTML + JS sin
+App de control de estaciones. El front-end es una app Vite (HTML + JS sin
 framework) que se despliega en **Vercel**; el login y los datos los sirve el
-Worker de Cloudflare (`control-estaciones-auth`), que no está en este repo.
+Worker de Cloudflare `control-estaciones-auth` (carpeta `worker/`), con una
+base de datos D1.
 
 ## Estructura
 
@@ -15,6 +16,7 @@ src/data.js       datos devueltos por /api/data (estaciones, alternativos, perno
 src/styles.css    estilos
 public/           ficheros estáticos (favicon)
 vercel.json       build, cabeceras de seguridad (CSP...) y caché
+worker/           Worker de Cloudflare (API) + wrangler.toml + schema.sql de la D1
 ```
 
 Leaflet, ExcelJS y las fuentes IBM Plex vienen de npm y se sirven desde el
@@ -49,10 +51,13 @@ Si cambias la URL del Worker, actualiza también `connect-src` en la CSP de
 1. En [vercel.com/new](https://vercel.com/new), importa el repositorio
    `VictorJorge5/Control-Outstations`. Vercel lee `vercel.json` (Vite,
    `npm run build`, salida `dist/`); no hay que tocar nada más.
-2. **Worker (CORS):** añade el dominio de Vercel
-   (`https://<proyecto>.vercel.app` y tu dominio propio, si lo usas) a los
-   orígenes permitidos del Worker. Sin esto el login falla con
-   «No se ha podido conectar con el servidor de acceso».
+2. **Worker (CORS):** despliega el Worker de `worker/` (admite varios
+   orígenes) y pon en la variable `ALLOWED_ORIGIN` los dos dominios separados
+   por comas, p. ej.
+   `https://victorjorge5.github.io,https://<proyecto>.vercel.app`.
+   Sin esto el login desde Vercel falla con «No se ha podido conectar con el
+   servidor de acceso». Con los dos a la vez, GitHub Pages sigue funcionando
+   mientras pruebas.
 3. **Worker (enlaces de correo):** los correos de «restablecer contraseña»
    llevan un enlace `?reset=<token>` a la URL de la app. Cambia esa URL en la
    configuración del Worker al nuevo dominio.
@@ -60,6 +65,20 @@ Si cambias la URL del Worker, actualiza también `connect-src` en la CSP de
    de previsualización.
 5. Cuando todo funcione en Vercel, apaga el hosting anterior para no tener dos
    versiones publicadas.
+
+## Worker (API)
+
+El código desplegado en Cloudflare está en `worker/src/index.js`. A partir de
+ahora conviene cambiarlo aquí y desplegar desde el repo, no editarlo en el panel:
+
+```bash
+cd worker
+npx wrangler login
+npx wrangler deploy
+```
+
+`wrangler.toml` lleva `keep_vars = true`, así que el deploy no toca las
+variables ni los secretos configurados en el panel.
 
 Aviso de versión nueva: cada build genera `/version.json` con una marca única;
 las pestañas abiertas lo consultan cada 5 minutos y, si cambia, muestran el
