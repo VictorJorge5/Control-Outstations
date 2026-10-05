@@ -1,0 +1,116 @@
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+
+/* ---- sistema de diseño: Iberia corporativo, claro y sobrio; el rojo solo como acento ---- */
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* rojo Iberia (#C8102E) y su escala */
+  --color-brand-50: #fdf2f3;
+  --color-brand-100: #fbe3e6;
+  --color-brand-200: #f6c4cb;
+  --color-brand-300: #ee97a3;
+  --color-brand-400: #e15d72;
+  --color-brand-500: #d4324c;
+  --color-brand-600: #c8102e;
+  --color-brand-700: #a50d26;
+  --color-brand-800: #880f23;
+  --color-brand-900: #731123;
+  --color-brand-950: #40040f;
+
+  /* amarillo Iberia, para detalles puntuales */
+  --color-gold-400: #fbd034;
+  --color-gold-500: #f8c400;
+
+  /* neutros con un punto frio: texto, bordes y fondos */
+  --color-ink-50: #f7f8fa;
+  --color-ink-100: #eef0f3;
+  --color-ink-150: #e5e8ec;
+  --color-ink-200: #dadee4;
+  --color-ink-300: #c2c8d0;
+  --color-ink-400: #98a1ad;
+  --color-ink-500: #6b7583;
+  --color-ink-600: #4e5764;
+  --color-ink-700: #3a414c;
+  --color-ink-800: #232831;
+  --color-ink-900: #151920;
+  --color-ink-950: #0b0e13;
+
+  --shadow-xs: 0 1px 2px rgb(11 14 19 / 0.05);
+  --shadow-card: 0 1px 2px rgb(11 14 19 / 0.04), 0 2px 8px -2px rgb(11 14 19 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(11 14 19 / 0.04), 0 12px 32px -8px rgb(11 14 19 / 0.14);
+  --shadow-overlay: 0 24px 64px -12px rgb(11 14 19 / 0.32), 0 4px 16px rgb(11 14 19 / 0.08);
+  --shadow-ring-brand: 0 0 0 4px rgb(200 16 46 / 0.12);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  --animate-marker-in: marker-in 0.5s var(--ease-out-expo) both;
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.6); opacity: 0.7; }
+  80%, 100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes marker-in {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-ink-50 text-ink-900 font-sans antialiased;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--color-brand-100); color: var(--color-brand-900); }
+  :focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+}
+
+@layer components {
+  /* esqueleto de carga */
+  .skeleton {
+    background: linear-gradient(90deg, var(--color-ink-100) 0, var(--color-ink-150) 40px, var(--color-ink-100) 80px) var(--color-ink-100);
+    background-size: 800px 100%;
+    animation: var(--animate-shimmer);
+    @apply rounded-md;
+  }
+
+  /* barras de desplazamiento discretas */
+  .scroll-thin { scrollbar-width: thin; scrollbar-color: var(--color-ink-200) transparent; }
+
+  /* ---- Leaflet con el aspecto de la app ---- */
+  .leaflet-container { font-family: var(--font-sans); background: #eef1f4; }
+  .leaflet-control-zoom.leaflet-bar { border: none; box-shadow: var(--shadow-card); border-radius: 12px; overflow: hidden; }
+  .leaflet-control-zoom a { width: 34px !important; height: 34px !important; line-height: 34px !important; color: var(--color-ink-700) !important; border-color: var(--color-ink-100) !important; }
+  .leaflet-control-zoom a:hover { background: var(--color-ink-50) !important; }
+  .leaflet-control-attribution { font-size: 10px; background: rgb(255 255 255 / 0.7) !important; backdrop-filter: blur(6px); border-radius: 8px 0 0 0; }
+  .leaflet-popup-content-wrapper { border-radius: 16px; box-shadow: var(--shadow-overlay); padding: 0; }
+  .leaflet-popup-content { margin: 0; width: 280px !important; }
+  .leaflet-popup-tip { box-shadow: none; }
+  .leaflet-container a.leaflet-popup-close-button { top: 10px; right: 10px; color: var(--color-ink-400); }
+
+  /* marcador de estacion */
+  .st-marker { position: relative; width: 16px; height: 16px; }
+  .st-marker .dot {
+    position: absolute; inset: 0; border-radius: 9999px; border: 2.5px solid #fff;
+    box-shadow: 0 1px 4px rgb(11 14 19 / 0.35); animation: var(--animate-marker-in);
+    transition: transform 0.2s var(--ease-out-expo);
+  }
+  .st-marker .ring { position: absolute; inset: 0; border-radius: 9999px; animation: var(--animate-pulse-ring); }
+  .st-marker.is-active .dot { transform: scale(1.35); }
+  .leaflet-marker-icon:hover .st-marker .dot { transform: scale(1.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
