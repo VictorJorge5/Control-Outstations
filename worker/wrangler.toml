@@ -5,9 +5,15 @@ main = "src/index.js"
 # Revisa en el panel de Cloudflare (Worker > Settings > Runtime) la fecha que tiene hoy y ponla aqui
 compatibility_date = "2026-09-16"
 
-# Las variables (ALLOWED_ORIGIN, APP_URL, FROM_EMAIL) y los secretos (AUTH_SECRET,
-# SENDGRID_API_KEY) se gestionan en el panel; keep_vars evita que un deploy los borre.
+# APP_URL, FROM_EMAIL y los secretos (AUTH_SECRET, SENDGRID_API_KEY) se gestionan en el
+# panel; keep_vars evita que un deploy los borre. Los origenes CORS se versionan aqui.
 keep_vars = true
+
+[vars]
+# GitHub Pages (version anterior, mientras dure la migracion) y Vercel (produccion)
+ALLOWED_ORIGIN = "https://victorjorge5.github.io,https://control-outstations.vercel.app"
+# previews de Vercel de cada rama/PR de este proyecto
+ALLOWED_ORIGIN_PATTERN = '^https://control-outstations-[a-z0-9-]+-victorjorge5s-projects\.vercel\.app$'
 
 [[d1_databases]]
 binding = "DB"

@@ -62,19 +62,20 @@ Si cambias la URL del Worker, actualiza también `connect-src` en la CSP de
 
 ## Puesta en marcha en Vercel (orden recomendado)
 
-1. **Desplegar el Worker nuevo** (`worker/`). Es compatible con la web actual de
-   GitHub Pages: sin `?lite=1` responde igual que antes.
-   - Antes, comprueba en el panel (Worker > Settings > Runtime) la
-     *compatibility date* y ponla en `worker/wrangler.toml`.
-   - `cd worker && npx wrangler deploy` (o el workflow «Deploy Workers»).
-2. **Importar el repo en Vercel** desde [vercel.com/new](https://vercel.com/new).
-   Lee `vercel.json` solo: Vite, `npm run build`, salida `dist/`.
-3. **Abrir el CORS al dominio nuevo** en las variables del Worker:
-   - `ALLOWED_ORIGIN` = `https://victorjorge5.github.io,https://<proyecto>.vercel.app`
-   - (opcional, para las previews de cada PR) `ALLOWED_ORIGIN_PATTERN` =
-     `^https://<proyecto>-[a-z0-9-]+-<equipo>\.vercel\.app$`
-4. Probar en Vercel. Cuando todo funcione, poner `APP_URL` al dominio de Vercel,
-   quitar GitHub Pages de `ALLOWED_ORIGIN` y desactivar GitHub Pages.
+1. **Vercel:** proyecto `control-outstations` creado y desplegado en
+   https://control-outstations.vercel.app (configuración de `vercel.json`: Vite,
+   `npm run build`, salida `dist/`). La protección de Vercel solo se aplica a las
+   previews. Falta conectar el repo en *Settings → Git* para que `main` y las PR
+   se desplieguen solas.
+2. **Worker:** se despliega con el workflow «Deploy Workers» al fusionar en
+   `main`. Es compatible con la web de GitHub Pages (sin `?lite=1` responde igual
+   que antes).
+3. **CORS:** `ALLOWED_ORIGIN` (GitHub Pages + Vercel) y `ALLOWED_ORIGIN_PATTERN`
+   (previews de Vercel) están en `[vars]` de `worker/wrangler.toml` y se aplican
+   en cada despliegue.
+4. Probar en Vercel. Cuando todo funcione, poner `APP_URL` al dominio de Vercel
+   (panel de Cloudflare), quitar GitHub Pages de `ALLOWED_ORIGIN` en
+   `worker/wrangler.toml` y desactivar GitHub Pages.
 
 Cada push a `main` despliega a producción; cada rama/PR tiene su propia URL de
 previsualización.
@@ -96,7 +97,8 @@ variables ni los secretos configurados en el panel.
 
 **Despliegue automático:** el workflow `Deploy Workers` despliega los dos
 Workers al cambiar `worker/**` o `support-worker/**` en `main` (o a mano desde
-la pestaña Actions). Necesita en GitHub (Settings > Secrets and variables >
+la pestaña Actions). En las PR hace un build de prueba y comprueba el token, sin
+desplegar. Necesita en GitHub (Settings > Secrets and variables >
 Actions) el secreto `CLOUDFLARE_API_TOKEN` (plantilla «Edit Cloudflare
 Workers») y la variable `CLOUDFLARE_ACCOUNT_ID`. Sin ellos se salta con un aviso.
 
