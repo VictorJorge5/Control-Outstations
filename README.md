@@ -1,29 +1,39 @@
 # Control de Estaciones · Outstations DTO
 
-App de control de estaciones. El front-end es una app Vite (HTML + JS sin
-framework) que se despliega en **Vercel**; el login y los datos los sirve el
-Worker de Cloudflare `control-estaciones-auth` (carpeta `worker/`), con una
-base de datos D1.
+App de control de estaciones. El front-end es una app **React + TypeScript**
+(Vite, Tailwind CSS, Motion) que se despliega en **Vercel**; el login y los
+datos los sirve el Worker de Cloudflare `control-estaciones-auth` (carpeta
+`worker/`), con una base de datos D1.
 
 ## Estructura
 
 ```
-index.html          marcado (login, cabecera, mapa, modales)
-src/main.js         acceso: login, sesión, roles, rutas (#inicio, #mapa, #seguimiento)
-src/app.js          la app (mapa, listas, fichas, F-CAMO, seguimiento, Excel).
-                    Se carga en un chunk aparte SOLO tras el login, cuando ya hay datos.
-src/data.js         datos devueltos por /api/data (estaciones, alternativos, pernoctas)
-src/styles.css      estilos
-public/             ficheros estáticos (favicon)
-vercel.json         build, cabeceras de seguridad (CSP...) y caché
-worker/             Worker "control-estaciones-auth" (API + D1) con wrangler.toml, schema.sql y tests
-support-worker/     Worker "outstations-support" (chatbot de soporte, Workers AI) con tests
-tests/e2e/          tests de Playwright contra el build de producción, con el Worker simulado
+index.html                 punto de entrada (solo monta React)
+src/main.tsx               arranque; src/app/legacy-links.ts redirige los enlaces antiguos (#mapa, #seguimiento/ABC)
+src/app/                   router, Root (login / carga de datos / app), aviso de versión nueva
+src/components/ui/         sistema de diseño: botones, tarjetas, diálogos, pestañas, interruptores...
+src/components/layout/     barra lateral, barra superior, buscador global (Ctrl/⌘+K), cabeceras de página
+src/features/              una carpeta por pantalla: auth, home, map, station (ficha), tracking,
+                           fcamo, pernocta, activity, users
+src/domain/                lógica sin interfaz: seguimiento, F-CAMO, flotas, estados, Excel
+src/lib/                   API (api.ts), sesión (session.ts), datos con TanStack Query (queries.ts)
+public/                    ficheros estáticos (favicon)
+vercel.json                build, cabeceras de seguridad (CSP...), caché y rutas de la SPA
+worker/                    Worker "control-estaciones-auth" (API + D1) con wrangler.toml, schema.sql y tests
+support-worker/            Worker "outstations-support" (chatbot de soporte, Workers AI) con tests
+tests/e2e/                 tests de Playwright contra el build de producción, con un Worker simulado con estado
 ```
 
-Leaflet, ExcelJS y las fuentes IBM Plex vienen de npm y se sirven desde el
-propio dominio (ya no hay CDNs ni Google Fonts). ExcelJS (~250 kB gzip) solo se
-descarga al pulsar «Descargar Excel».
+Rutas: `/` inicio, `/mapa`, `/seguimiento[/ABC]`, `/fcamo[/nuevo|/papelera|/:id]`,
+`/pernoctas`, `/actividad`, `/usuarios[/nuevo|/historial]`. La ficha de una
+estación se abre encima de cualquier pantalla con `?estacion=ABC` (y `&tab=sched`
+para ir a una pestaña), así que los enlaces se pueden compartir.
+
+Cada pantalla se descarga en su propio chunk; el login solo carga lo mínimo y el
+resto de la app se baja en paralelo con los datos. Leaflet, ExcelJS y las
+fuentes (Inter, IBM Plex Mono) vienen de npm y se sirven desde el propio
+dominio. ExcelJS (~250 kB gzip) solo se descarga al pulsar «Descargar Excel», y
+el Excel que genera es idéntico al de la versión anterior.
 
 ### Carga de datos
 
@@ -39,6 +49,7 @@ ignora `lite=1`, todo sigue funcionando con los datos completos.
 npm install
 npm run dev          # http://localhost:5173
 npm run lint
+npm run typecheck
 npm run test:worker  # tests de los dos Workers (SQLite real con worker/schema.sql)
 npm run test:e2e     # build + vite preview con la CSP de vercel.json + Playwright
 npm test             # todo lo anterior

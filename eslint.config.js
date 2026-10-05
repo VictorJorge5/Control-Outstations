@@ -1,18 +1,20 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
 
-export default [
+export default tseslint.config(
   { ignores: ['dist/', 'node_modules/', 'playwright-report/', 'test-results/'] },
   js.configs.recommended,
   {
-    files: ['src/**/*.js'],
-    languageOptions: {
-      globals: { ...globals.browser, __APP_BUILD__: 'readonly' },
-    },
+    files: ['src/**/*.{ts,tsx}', '*.config.ts'],
+    extends: [...tseslint.configs.recommended],
+    plugins: { 'react-hooks': reactHooks },
+    languageOptions: { globals: globals.browser },
     rules: {
-      'no-empty': ['error', { allowEmptyCatch: true }],
-      'no-unused-vars': ['warn', { caughtErrors: 'none' }],
-      'no-useless-escape': 'warn',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
   {
@@ -24,8 +26,8 @@ export default [
     },
   },
   {
-    files: ['*.config.js', '*/test/**/*.js', 'tests/**/*.js'],
+    files: ['*.config.{js,ts}', '*/test/**/*.js', 'tests/**/*.js'],
     // los tests e2e tambien llevan codigo que corre en el navegador (page.evaluate)
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
-];
+);
