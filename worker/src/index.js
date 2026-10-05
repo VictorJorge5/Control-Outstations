@@ -7,7 +7,7 @@
  *   POST /api/reset-password   { token, password }        -> { ok: true }
  *   POST /api/change-password  { current_password, new_password } -> { token, ... }  (voluntario u obligatorio tras una temporal)
  *   GET  /api/health                                       -> { ok: true }
- *   GET  /api/data[?lite=1]    -> { stations, alt_stations, pernocta_months }  (lite: sin horario ni pernoctas por dia)
+ *   GET  /api/data[?lite=1]    -> { stations, alt_stations, pernocta_months, data_updated_at }  (lite: sin horario ni pernoctas por dia)
  *   GET  /api/station/:code    -> { code, schedule, pernocta_by_date }  (lo que lite deja fuera, al abrir una ficha)
  *   ---- seguimiento de estaciones sin proveedor (cualquier usuario con sesion) ----
  *   GET    /api/tracking                          -> { notes, candidates }
@@ -675,10 +675,11 @@ async function handleRequest(request, env) {
       const email = await verifySessionToken(token, env);
       if (!email) return json({ error: 'No autorizado' }, 401, env);
 
-      const [stationsRes, altRes, metaRow] = await Promise.all([
+      const [stationsRes, altRes, metaRow, updatedRow] = await Promise.all([
         env.DB.prepare('SELECT data FROM station_full').all(),
         env.DB.prepare('SELECT data FROM alt_station_full').all(),
         env.DB.prepare("SELECT value FROM app_meta WHERE key = 'pernocta_months'").first(),
+        env.DB.prepare('SELECT MAX(t) AS t FROM (SELECT MAX(updated_at) AS t FROM station_full UNION ALL SELECT MAX(updated_at) FROM alt_station_full)').first(),
       ]);
       const lite = url.searchParams.get('lite') === '1';
       const stations = stationsRes.results.map(r => {
@@ -688,7 +689,8 @@ async function handleRequest(request, env) {
       const altStations = altRes.results.map(r => JSON.parse(r.data));
       const pernoctaMonths = metaRow ? JSON.parse(metaRow.value) : [];
 
-      return json({ stations, alt_stations: altStations, pernocta_months: pernoctaMonths }, 200, env);
+      // data_updated_at: ultima carga de datos (segundos unix), para el aviso de "datos actualizados"
+      return json({ stations, alt_stations: altStations, pernocta_months: pernoctaMonths, data_updated_at: (updatedRow && updatedRow.t) || null }, 200, env);
     }
 
     // ---- detalle pesado de una estacion (horario y pernoctas por dia), para la version lite de /api/data ----

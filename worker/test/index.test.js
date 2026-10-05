@@ -60,7 +60,7 @@ beforeEach(async () => {
   const addUser = db.prepare('INSERT INTO users (email, salt, password_hash, created_at, is_admin, role) VALUES (?, ?, ?, 0, ?, ?)');
   addUser.run('admin@iberia.es', salt, hash, 1, 'admin');
   addUser.run('user@iberia.es', salt, hash, 0, 'user');
-  db.prepare('INSERT INTO station_full (code, data, updated_at) VALUES (?, ?, 0)').run('LHR', JSON.stringify(LHR));
+  db.prepare('INSERT INTO station_full (code, data, updated_at) VALUES (?, ?, 1789000000)').run('LHR', JSON.stringify(LHR));
   db.prepare("INSERT INTO app_meta (key, value) VALUES ('pernocta_months', '[\"2026-10\"]')").run();
   db.prepare("INSERT INTO fcamo_checklists (station_code, reason, created_by, created_at, deleted) VALUES ('LHR', 'opening', 'x', 0, 1)").run();
   env = { DB: fakeD1(db), AUTH_SECRET: 'test-secret', ALLOWED_ORIGIN: `${PAGES}, ${VERCEL}/`, APP_URL: `${PAGES}/Control-Outstations/` };
@@ -94,6 +94,7 @@ test('/api/data sin lite devuelve las estaciones completas (front antiguo)', asy
   assert.equal(status, 200);
   assert.deepEqual(data.stations[0].schedule, SCHEDULE);
   assert.deepEqual(data.pernocta_months, ['2026-10']);
+  assert.equal(data.data_updated_at, 1789000000);
 });
 
 test('/api/data?lite=1 quita horario y pernoctas por dia y calcula el primer vuelo', async () => {
