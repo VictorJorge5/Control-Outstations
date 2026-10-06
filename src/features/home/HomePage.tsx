@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import {
-  Activity, ArrowRight, ArrowUpRight, Building2, ClipboardCheck, Globe2, Moon, PlaneTakeoff, TriangleAlert, Users,
+  Activity, ArrowRight, ArrowUpRight, Building2, CircleCheck, ClipboardCheck, Globe2, Moon, PlaneTakeoff, TriangleAlert, Users,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { fadeUp, stagger } from '@/lib/motion';
@@ -10,9 +10,10 @@ import { monthLabel, plural, timeAgo } from '@/lib/format';
 import { usePermissions, useSession } from '@/lib/session';
 import { useActivity, useAppData, useFcamoList, useNotes, useUsers } from '@/lib/queries';
 import { homeTrackingSummary } from '@/domain/tracking';
+import { attentionItems, type AttentionItem, type Severity } from '@/domain/attention';
 import { STATUS_META, stationStatus, type StationStatus } from '@/domain/status';
 import { AnimatedNumber } from '@/components/ui/controls';
-import { Card, Skeleton } from '@/components/ui/primitives';
+import { Card, Code, Skeleton } from '@/components/ui/primitives';
 import { Page } from '@/components/layout/Page';
 import { ActivityText } from '@/features/activity/activityText';
 
@@ -73,7 +74,7 @@ export default function HomePage() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <motion.div variants={fadeUp} initial="hidden" animate="show" transition={{ delay: 0.3 }} className="lg:col-span-2">
-          <NetworkCard />
+          <AttentionCard items={notes.data && fcamo.data ? attentionItems(stations, notes.data, fcamo.data) : null} />
         </motion.div>
         <motion.div variants={fadeUp} initial="hidden" animate="show" transition={{ delay: 0.38 }}>
           <Card className="flex h-full flex-col p-5">
@@ -98,6 +99,10 @@ export default function HomePage() {
           </Card>
         </motion.div>
       </div>
+
+      <motion.div variants={fadeUp} initial="hidden" animate="show" transition={{ delay: 0.45 }} className="mt-4">
+        <NetworkCard />
+      </motion.div>
 
       {/* modulos */}
       <h2 className="mb-3 mt-10 text-[15px] font-semibold text-ink-900">Módulos</h2>
@@ -216,7 +221,7 @@ function NetworkCard() {
             <h3 className="text-[13px] font-semibold text-ink-800">Pernoctas por mes</h3>
             <span className="hidden text-xs text-ink-400 sm:inline">noches con avión en estación, todas las estaciones</span>
           </div>
-          <div className="relative mt-4 flex h-28 items-end gap-1.5 sm:gap-2">
+          <div className="relative mt-9 flex h-28 items-end gap-1.5 sm:gap-3">
             {perMonth.map((p, i) => (
               <button
                 key={p.m}
@@ -235,15 +240,75 @@ function NetworkCard() {
                   initial={{ height: 0 }}
                   animate={{ height: `${Math.max(2, (p.n / max) * 100)}%` }}
                   transition={{ duration: 0.8, delay: 0.5 + i * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                  className={cn('w-full max-w-6 rounded-t-[4px] transition-colors', hover === p.m ? 'bg-brand-600' : 'bg-brand-400/80')}
+                  className={cn('w-full max-w-10 rounded-t-[4px] transition-colors', hover === p.m ? 'bg-brand-600' : 'bg-brand-400/80')}
                 />
               </button>
             ))}
           </div>
-          <div className="mt-2 flex gap-1.5 border-t border-ink-150 pt-1.5 sm:gap-2">
+          <div className="mt-2 flex gap-1.5 border-t border-ink-150 pt-1.5 sm:gap-3">
             {perMonth.map(p => <span key={p.m} className="flex-1 text-center text-[10.5px] capitalize text-ink-400">{monthLabel(p.m).split(' ')[0]}</span>)}
           </div>
         </div>
+      )}
+    </Card>
+  );
+}
+
+// ---- Requiere atencion: lo urgente primero ----
+const SEV: Record<Severity, { label: string; dot: string; text: string }> = {
+  critical: { label: 'Urgente', dot: 'bg-brand-600', text: 'text-brand-700' },
+  high: { label: 'Pronto', dot: 'bg-amber-500', text: 'text-amber-700' },
+  medium: { label: 'Revisar', dot: 'bg-ink-300', text: 'text-ink-500' },
+};
+
+function AttentionCard({ items }: { items: AttentionItem[] | null }) {
+  const [all, setAll] = useState(false);
+  const shown = items ? (all ? items : items.slice(0, 5)) : [];
+  const critical = items?.filter(i => i.severity === 'critical').length ?? 0;
+  return (
+    <Card className="flex h-full flex-col p-5" data-testid="attention">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink-900">
+          Requiere atención
+          {items && items.length > 0 && <span className={cn('rounded-full px-2 py-0.5 text-[11.5px] font-semibold tabular-nums', critical ? 'bg-brand-600 text-white' : 'bg-ink-100 text-ink-600')}>{items.length}</span>}
+        </h2>
+        <Link to="/seguimiento" className="flex items-center gap-1 text-[13px] font-medium text-ink-500 hover:text-brand-600">Seguimiento <ArrowRight className="size-3.5" /></Link>
+      </div>
+      <div className="mt-1 text-xs text-ink-400">Ordenado por urgencia: primer vuelo, fase del seguimiento y tiempo sin cambios</div>
+
+      <div className="mt-4 flex-1">
+        {!items && <div className="space-y-2">{Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-12" />)}</div>}
+        {items && items.length === 0 && (
+          <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="flex h-full min-h-40 flex-col items-center justify-center gap-2 text-center">
+            <span className="grid size-11 place-items-center rounded-full bg-emerald-50 text-emerald-600"><CircleCheck className="size-6" /></span>
+            <div className="text-sm font-semibold text-ink-800">Todo en orden</div>
+            <div className="text-xs text-ink-500">No hay estaciones, F-CAMO ni pernoctas pendientes.</div>
+          </motion.div>
+        )}
+        <ul className="-mx-2 space-y-0.5">
+          {shown.map((it, i) => (
+            <motion.li key={it.key} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 + Math.min(i, 8) * 0.04 }}>
+              <Link to={it.to} data-testid="attention-item" data-severity={it.severity} className="group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-ink-50">
+                <span className="relative grid size-2.5 shrink-0 place-items-center">
+                  {it.severity === 'critical' && <span className="absolute inset-0 animate-ping rounded-full bg-brand-500/60" />}
+                  <span className={cn('relative size-2.5 rounded-full', SEV[it.severity].dot)} />
+                </span>
+                <Code size="sm">{it.code}</Code>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13.5px] font-medium text-ink-900">{it.title}</span>
+                  <span className="block truncate text-xs text-ink-500">{it.detail}</span>
+                </span>
+                <span className={cn('hidden text-[11px] font-semibold uppercase tracking-wider sm:inline', SEV[it.severity].text)}>{SEV[it.severity].label}</span>
+                <ArrowRight className="size-4 shrink-0 text-ink-300 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-600" />
+              </Link>
+            </motion.li>
+          ))}
+        </ul>
+      </div>
+      {items && items.length > 5 && (
+        <button onClick={() => setAll(v => !v)} className="mt-2 self-start rounded-lg px-2 py-1 text-[13px] font-medium text-ink-500 hover:bg-ink-50 hover:text-ink-900">
+          {all ? 'Ver menos' : `Ver las ${items.length}`}
+        </button>
       )}
     </Card>
   );

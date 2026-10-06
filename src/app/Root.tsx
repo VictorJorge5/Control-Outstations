@@ -5,6 +5,7 @@ import { session, useSession } from '@/lib/session';
 import { AppDataContext, buildAppData, fetchAppData, queryClient } from '@/lib/queries';
 import { LoginScreen } from '@/features/auth/LoginScreen';
 import { LoadingScreen } from '@/features/auth/LoadingScreen';
+import { clearChunkReloadFlag } from './ErrorPages';
 
 // la app completa (shell, ficha, buscador...) se descarga mientras se cargan los datos, no en el login
 const loadShell = () => import('@/components/layout/AppShell');
@@ -41,7 +42,7 @@ export function Root() {
 function DataGate() {
   const q = useQuery({ queryKey: ['app-data'], queryFn: fetchAppData, staleTime: Infinity, retry: 1, refetchOnWindowFocus: false });
   const value = useMemo(() => (q.data ? buildAppData(q.data) : null), [q.data]);
-  useEffect(() => { loadShell(); }, []); // codigo y datos en paralelo
+  useEffect(() => { loadShell().then(clearChunkReloadFlag, () => {}); }, []); // codigo y datos en paralelo
 
   useEffect(() => {
     if (q.error && session.get().token) {

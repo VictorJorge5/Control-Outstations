@@ -293,3 +293,54 @@ test('aviso de versión nueva cuando cambia /version.json @smoke', async ({ page
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await expect(page.getByTestId('update-banner')).toBeVisible();
 });
+
+test.describe('portada y extras', () => {
+  test.skip(({ isMobile }) => isMobile, 'flujo de escritorio');
+
+  test('requiere atención: lo urgente primero y enlaza al seguimiento', async ({ page, context }) => {
+    await mockApi(context);
+    await login(page);
+    const items = page.getByTestId('attention-item');
+    // CDG ya opera sin proveedor: urgente y la primera
+    await expect(items.first()).toContainText('CDG');
+    await expect(items.first()).toHaveAttribute('data-severity', 'critical');
+    await expect(page.getByTestId('attention')).toContainText('F-CAMO de London');
+    await items.first().click();
+    await expect(page).toHaveURL(/\/seguimiento\/CDG$/);
+  });
+
+  test('una ruta que no existe muestra el 404 dentro de la app', async ({ page, context }) => {
+    await mockApi(context);
+    await login(page, '/no-existe');
+    await expect(page.getByTestId('not-found')).toContainText('no existe');
+    await page.getByRole('link', { name: 'Volver al inicio' }).click();
+    await expect(page.getByTestId('attention')).toBeVisible();
+  });
+
+  test('atajos de teclado: ayuda con ? y G + letra para navegar', async ({ page, context }) => {
+    await mockApi(context);
+    await login(page);
+    await page.keyboard.press('Shift+Slash');
+    await expect(page.getByTestId('shortcuts-help')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('shortcuts-help')).toHaveCount(0);
+    await page.keyboard.press('g');
+    await page.keyboard.press('m');
+    await expect(page).toHaveURL(/\/mapa$/);
+    await expect(page.getByTestId('station-row')).toHaveCount(STATIONS.length);
+  });
+
+  test('mapa: rutas desde Madrid y exportación CSV de la lista', async ({ page, context }) => {
+    await mockApi(context);
+    await login(page, '/mapa');
+    await expect(page.locator('path.route-arc')).toHaveCount(STATIONS.filter(s => s.in_schedule).length);
+    await page.getByRole('switch', { name: 'Rutas desde Madrid' }).click();
+    await expect(page.locator('path.route-arc')).toHaveCount(0);
+
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-csv').click()]);
+    expect(download.suggestedFilename()).toMatch(/^estaciones-red-\d{4}-\d{2}-\d{2}\.csv$/);
+    const csv = (await import('node:fs')).readFileSync(await download.path(), 'utf8');
+    expect(csv.split('\r\n')).toHaveLength(STATIONS.length + 1);
+    expect(csv).toContain('CDG;');
+  });
+});

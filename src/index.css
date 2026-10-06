@@ -109,8 +109,15 @@
   .st-marker .ring { position: absolute; inset: 0; border-radius: 9999px; animation: var(--animate-pulse-ring); }
   .st-marker.is-active .dot { transform: scale(1.35); }
   .leaflet-marker-icon:hover .st-marker .dot { transform: scale(1.25); }
+  /* rutas desde MAD: se dibujan una a una y quedan quietas */
+  .route-arc { stroke-dasharray: 2400; stroke-dashoffset: 2400; animation: route-draw 1.4s var(--ease-out-expo) forwards; transition: stroke 0.2s, stroke-width 0.2s, stroke-opacity 0.2s; }
+  .leaflet-tooltip.hub-tip { border: 0; border-radius: 8px; background: #0b0e13; color: #fff; font-weight: 600; font-size: 11px; padding: 3px 8px; box-shadow: none; }
+  .leaflet-tooltip.hub-tip::before { display: none; }
 }
 
+@keyframes route-draw { to { stroke-dashoffset: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
+  .route-arc { stroke-dashoffset: 0; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
