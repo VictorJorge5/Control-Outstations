@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router';
+import { createBrowserRouter, RouterProvider } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { MotionConfig } from 'motion/react';
 import { Toaster } from 'sonner';
@@ -9,6 +9,7 @@ import { TooltipProvider } from '@/components/ui/controls';
 import { Root } from './Root';
 import { PageFallback } from './PageFallback';
 import { UpdateBanner } from './UpdateBanner';
+import { NotFoundPage, RouteError } from './ErrorPages';
 
 // Cada pantalla en su propio chunk: el login no descarga el mapa ni el resto de la app.
 const HomePage = lazy(() => import('@/features/home/HomePage'));
@@ -31,7 +32,8 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <Root />,
-    children: [
+    errorElement: <RouteError />,
+    children: [{ errorElement: <RouteError />, children: [
       { index: true, element: page(HomePage) },
       { path: 'mapa', element: page(MapPage) },
       { path: 'seguimiento', element: page(TrackingPage) },
@@ -45,8 +47,8 @@ const router = createBrowserRouter([
       { path: 'usuarios', element: page(UsersPage) },
       { path: 'usuarios/nuevo', element: page(NewUserPage) },
       { path: 'usuarios/historial', element: page(AuditPage) },
-      { path: '*', element: <Navigate to="/" replace /> },
-    ],
+      { path: '*', element: <NotFoundPage /> },
+    ] }],
   },
 ]);
 

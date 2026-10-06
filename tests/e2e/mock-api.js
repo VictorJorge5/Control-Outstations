@@ -1,5 +1,8 @@
 // Worker simulado para los tests e2e: misma forma de respuesta que worker/src/index.js y con
 // estado en memoria (cada test empieza con datos limpios), para poder probar cambios de verdad.
+// MOCK_DATA=/ruta/datos.json carga otro juego de estaciones (p. ej. a escala real) solo en local.
+import { readFileSync } from 'node:fs';
+
 export const API = 'https://control-estaciones-auth.victorjjm5.workers.dev';
 
 const SCHEDULE = [
@@ -25,6 +28,25 @@ const ALT = [
   { code: 'CDG', city: 'Paris', country: 'France', lat: 49.0, lon: 2.55, providers: [{ supplier: 'Aviapartner', easa: 'FR.145.0001', email: 'ops@aviapartner.test', phone: '+33 1', fleet: { CFM56: true } }, { supplier: 'WFS', fleet: {} }] },
   { code: 'BOS', city: 'Boston', country: 'USA', lat: 42.36, lon: -71.0, providers: [{ supplier: 'Menzies', fleet: { CFM56: true } }] },
 ];
+
+const EXTERNAL = process.env.MOCK_DATA ? JSON.parse(readFileSync(process.env.MOCK_DATA, 'utf8')) : null;
+const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+// horario y pernoctas inventados con el volumen de la estacion (solo para MOCK_DATA)
+function syntheticDetails(s) {
+  const schedule = [];
+  const start = Date.UTC(2026, 8, 15);
+  for (let i = 0; i < s.flights; i++) {
+    const d = new Date(start + Math.floor((i / Math.max(1, s.flights)) * 194) * 86400000);
+    const date = `${String(d.getUTCDate()).padStart(2, '0')}/${MON[d.getUTCMonth()]}/${d.getUTCFullYear()}`;
+    const out = i % 2 === 0;
+    schedule.push([date, '1234567', `IB${3100 + (i % 80)}`, out ? 'MAD' : s.code, out ? '4S' : '1', `${String(7 + (i % 14)).padStart(2, '0')}:${i % 2 ? '35' : '05'}`, out ? s.code : 'MAD', out ? '1' : '4S', `${String(9 + (i % 12)).padStart(2, '0')}:20`, ['A320 NEO', 'A321 CEO', 'A350', 'A330 RR700'][i % 4]]);
+  }
+  const pernocta_by_date = {};
+  Object.entries(s.pernocta_by_month || {}).forEach(([m, n]) => {
+    for (let d = 1; d <= n; d++) pernocta_by_date[`${m}-${String(d).padStart(2, '0')}`] = [{ arr_flight: 'IB3170', arr_from: 'MAD', arr_from_time: '20:05', arr_to: s.code, arr_to_time: '22:30', dep_flight: 'IB3171', dep_from: s.code, dep_from_time: '07:15', dep_to: 'MAD', dep_to_time: '09:40' }];
+  });
+  return { code: s.code, schedule, pernocta_by_date };
+}
 
 const lite = s => {
   const out = { ...s, first_flight: s.schedule.length ? s.schedule[0][0] : null };
@@ -83,11 +105,16 @@ export async function mockApi(context, { legacy = false, role = 'admin', mustCha
     if (p === '/api/change-password') return reply({ ok: true, token: 't2', role, email: db.me.email, show_data_badge: true });
     if (p === '/api/me') return reply({ role, email: db.me.email });
     if (p === '/api/data') {
+      if (EXTERNAL) return reply({ ...EXTERNAL, data_updated_at: 1789650015 });
       const useLite = !legacy && url.searchParams.get('lite') === '1';
       return reply({ stations: STATIONS.map(s => (useLite ? lite(s) : s)), alt_stations: ALT, pernocta_months: ['2026-09', '2026-10', '2026-11'], data_updated_at: 1789650015 });
     }
     if (p.startsWith('/api/station/')) {
       if (legacy) return reply({ error: 'Not found' }, 404);
+      if (EXTERNAL) {
+        const s = EXTERNAL.stations.find(x => x.code === parts[2]);
+        return s ? reply(syntheticDetails(s)) : reply({ error: 'Estación no encontrada' }, 404);
+      }
       const s = STATIONS.find(x => x.code === parts[2]);
       return s ? reply({ code: s.code, schedule: s.schedule, pernocta_by_date: s.pernocta_by_date }) : reply({ error: 'Estación no encontrada' }, 404);
     }

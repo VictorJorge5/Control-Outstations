@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { Activity, ArrowRight, FileText, List, Map as MapIcon, Moon, SearchX, X } from 'lucide-react';
+import { Activity, ArrowRight, Download, FileText, List, Map as MapIcon, Moon, SearchX, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useAppData } from '@/lib/queries';
 import { useStationNav } from '@/lib/nav';
@@ -25,6 +25,7 @@ export default function MapPage() {
   const [stationFilter, setStationFilter] = useState('');
   const [activeOnly, setActiveOnly] = useState(false);
   const [pernoctaOnly, setPernoctaOnly] = useState(false);
+  const [routes, setRoutes] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
   const [focus, setFocus] = useState<MapFocus | null>(null);
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
@@ -97,6 +98,7 @@ export default function MapPage() {
             <div className="space-y-2.5 pt-1">
               <Switch checked={activeOnly} onCheckedChange={setActiveOnly} label="Solo con vuelo esta temporada" />
               <Switch checked={pernoctaOnly} onCheckedChange={setPernoctaOnly} label="Solo estaciones de pernocta" />
+              <Switch checked={routes} onCheckedChange={setRoutes} label="Rutas desde Madrid" />
             </div>
           )}
           <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-[13px]">
@@ -109,6 +111,9 @@ export default function MapPage() {
           <span className="font-medium uppercase tracking-wider text-ink-400">Estaciones</span>
           <span className="flex items-center gap-2">
             <span data-testid="list-count"><b className="font-semibold text-ink-800 tabular-nums">{listSorted.length}</b> resultado{listSorted.length === 1 ? '' : 's'}</span>
+            <Tip content="Descargar esta lista en CSV (Excel)">
+              <button onClick={() => downloadCsv(mode, listSorted)} disabled={!listSorted.length} className="grid size-6 place-items-center rounded-md text-ink-400 hover:bg-ink-100 hover:text-ink-900 disabled:opacity-30" aria-label="Exportar lista a CSV" data-testid="export-csv"><Download className="size-3.5" /></button>
+            </Tip>
             {hasFilters && <button onClick={clearFilters} className="flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium text-brand-600 hover:bg-brand-50"><X className="size-3" /> Limpiar</button>}
           </span>
         </div>
@@ -142,11 +147,27 @@ export default function MapPage() {
           focus={focus}
           onSelect={code => setSelected(code)}
           onOpen={open}
+          routes={routes}
         />
-        <Legend mode={mode} />
+        <Legend mode={mode} routes={routes} />
       </div>
     </div>
   );
+}
+
+// CSV con ; y BOM: Excel en español lo abre bien con doble clic
+function downloadCsv(mode: Mode, list: (Station | AltStation)[]) {
+  const esc = (v: unknown) => { const t = String(v ?? ''); return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+  const rows: unknown[][] = mode === 'main'
+    ? [['Código', 'Ciudad', 'País', 'Estado', 'Proveedores', 'Movimientos IB', 'Primer vuelo', 'Pernocta'],
+      ...(list as Station[]).map(s => [s.code, s.city, s.country, STATUS_META[stationStatus(s)].label, s.providers.join(' / '), s.in_schedule ? s.flights : 0, s.first_flight || '', s.pernocta ? 'Sí' : 'No'])]
+    : [['Código', 'Ciudad', 'País', 'Proveedores no contratados', 'EASA', 'Email', 'Teléfono'],
+      ...(list as AltStation[]).map(s => [s.code, s.city, s.country, s.providers.map(p => p.supplier).join(' / '), s.providers.map(p => p.easa || '').filter(Boolean).join(' / '), s.providers.map(p => p.email || '').filter(Boolean).join(' / '), s.providers.map(p => p.phone || '').filter(Boolean).join(' / ')])];
+  const csv = '\ufeff' + rows.map(r => r.map(esc).join(';')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: `estaciones-${mode === 'main' ? 'red' : 'no-contratados'}-${new Date().toISOString().slice(0, 10)}.csv` });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function StationRow({ station, mode, index, active, onClick, onOpen }: { station: Station | AltStation; mode: Mode; index: number; active: boolean; onClick: () => void; onOpen: () => void }) {
@@ -200,7 +221,7 @@ function StationRow({ station, mode, index, active, onClick, onOpen }: { station
   );
 }
 
-function Legend({ mode }: { mode: Mode }) {
+function Legend({ mode, routes }: { mode: Mode; routes: boolean }) {
   const items = mode === 'main'
     ? (Object.keys(STATUS_META) as (keyof typeof STATUS_META)[]).map(k => ({ color: STATUS_META[k].color, label: STATUS_META[k].label }))
     : [{ color: ALT_COLOR, label: 'Proveedores no contratados' }];
@@ -208,6 +229,7 @@ function Legend({ mode }: { mode: Mode }) {
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="pointer-events-none absolute bottom-6 left-4 z-[400] flex flex-wrap gap-x-4 gap-y-1.5 rounded-2xl bg-white/85 px-4 py-2.5 text-xs text-ink-600 shadow-lift ring-1 ring-ink-950/5 backdrop-blur-md">
       {items.map(it => <span key={it.label} className="flex items-center gap-1.5"><span className="size-2.5 rounded-full ring-2 ring-white" style={{ background: it.color }} />{it.label}</span>)}
       {mode === 'main' && <span className="flex items-center gap-1.5"><Moon className="size-3 text-violet-500" /> Pernocta</span>}
+      {mode === 'main' && routes && <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 rounded-full bg-ink-400" /> Ruta desde MAD</span>}
     </motion.div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { NavLink, useLocation, useOutlet } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { Dialog as RDialog, DropdownMenu } from 'radix-ui';
@@ -17,6 +17,7 @@ import { ChangePasswordDialog } from '@/features/auth/ChangePasswordDialog';
 import { StationSheet } from '@/features/station/StationSheet';
 import { AltStationDialog } from '@/features/station/AltStationDialog';
 import { CommandPalette } from './CommandPalette';
+import { Shortcuts } from './Shortcuts';
 import type { Role } from '@/lib/types';
 
 const ROLE_LABEL: Record<Role, string> = { admin: 'Administrador', user: 'Usuario', viewer: 'Consulta' };
@@ -27,6 +28,7 @@ export function AppShell({ dataUpdatedAt }: { dataUpdatedAt?: number | null }) {
   const [palette, setPalette] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
   const isMap = location.pathname === '/mapa';
+  const openSearch = useCallback(() => setPalette(true), []);
 
   // el rol puede haberlo cambiado un administrador: se pregunta al servidor al entrar
   useEffect(() => {
@@ -91,6 +93,7 @@ export function AppShell({ dataUpdatedAt }: { dataUpdatedAt?: number | null }) {
       <AltStationDialog />
       <CommandPalette open={palette} onOpenChange={setPalette} />
       <ChangePasswordDialog open={pwOpen} onOpenChange={setPwOpen} />
+      <Shortcuts onSearch={openSearch} />
     </div>
   );
 }
